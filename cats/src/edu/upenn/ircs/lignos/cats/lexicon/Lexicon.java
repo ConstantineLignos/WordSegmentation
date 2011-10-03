@@ -40,6 +40,8 @@ public class Lexicon {
 	private static final double INIT_SCORE = 0.5; 
 	// Smoothed score used for zero scores in LRP
 	private static final double LRP_SMOOTHING_MIN = 0.0; 
+	// TODO: Make configurable
+	private static final boolean NORMALIZATION = false;
 	
 	private final boolean stressSensitive;
 	private final boolean trace;
@@ -54,6 +56,9 @@ public class Lexicon {
 	private final double smoothingMin;
 	// The number of times tick has been called since the creation of the lexicon
 	private long time;
+	// The number of tokens represented by the lexicon
+	// TODO: Token counting is not compatible with decay or LRP
+	private long numTokens;
 	// Our random number generator
 	private Random rand;
 	
@@ -102,6 +107,7 @@ public class Lexicon {
 		
 		lexicon = new THashMap<String, Word>();
 		time = 1;
+		numTokens = 0;
 		rand = new Random(0);
 	}
 	
@@ -208,6 +214,8 @@ public class Lexicon {
 			// Increment the word's score
 			incWord(w);
 		}
+		// Count the token
+		numTokens++;
 	}
 	
 	
@@ -238,6 +246,8 @@ public class Lexicon {
 		else {
 			w.decrement(PENALTY);
 		}
+		// Uncount the token
+		numTokens -= PENALTY;
 		if (trace) System.out.println("Penalized " + w + " " + w.getScore(time));
 	}
 	
@@ -308,10 +318,18 @@ public class Lexicon {
 			}
 			else {
 				// If it's there, smooth up to the minimum if needed
-				wordsScores[i] = Math.max(w.getScore(time), smoothingMin);
+				wordsScores[i] = Math.max(getScore(w), getSmoothingMin());
 			}
 		}
 		return wordsScores;
+	}
+	
+	/**
+	 * Gives the minimum smoothed word score taking normalization into account.
+	 * @return minimum smoothed word score
+	 */
+	private double getSmoothingMin(){
+		return NORMALIZATION ? smoothingMin/numTokens : smoothingMin;
 	}
 	
 	
@@ -418,7 +436,7 @@ public class Lexicon {
 	 * @return the word's score at the current time
 	 */
 	public double getScore(Word w) {
-		return w.getScore(time);
+		return NORMALIZATION ? w.getScore(time)/numTokens : w.getScore(time);
 	}
 
 	

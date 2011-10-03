@@ -154,7 +154,9 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		for (int i = 0; i < beam.size(); i++) {
 			double scores[] = lex.utteranceWordsScores(utt.getUnits(), 
 					utt.getStresses(), beam.get(i).segmentation);
+			// TODO: Make logProb scoring an option
 			double segScore =  SegUtil.geometricMean(scores);
+			//double segScore = SegUtil.logProb(scores);
 			if (trace) System.out.println(Utterance.makeSegText(utt.getUnits(), 
 					utt.getStresses(), beam.get(i).segmentation) +  " score: " + 
 					segScore);

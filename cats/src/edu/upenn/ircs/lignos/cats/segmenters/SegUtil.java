@@ -181,7 +181,7 @@ public class SegUtil {
 	 * @param nums the numbers to scan
 	 * @return the negation of the number of ones
 	 */
-	public static double countOnes (double[] nums) { 
+	public static double countOnes(double[] nums) { 
 		int count = 0;
 		for (double num : nums) {
 			if (num == 1.0) {
@@ -200,7 +200,7 @@ public class SegUtil {
 	 * @param nums the numbers to scan
 	 * @return the variance
 	 */
-	public static double calcVariance (double[] nums) { 
+	public static double calcVariance(double[] nums) { 
 		double sum = 0;
 		double sumSqrs = 0;
 		
@@ -215,18 +215,32 @@ public class SegUtil {
 	
 	
 	/**
-	 * Return the sum of differences between frequencies between words and th
+	 * Return the sum of differences between frequencies between words and the
 	 * the word that precedes them
-	 * @param nums the frequencis of words
+	 * @param nums the frequencies of words
 	 * @return sum of incremental differences
 	 */
-	public static double calcAlternation (double[] nums) { 
+	public static double calcAlternation(double[] nums) { 
 		double sum = 0;
 		
 		for (int i = 1; i < nums.length; i++) {
 			sum += Math.abs(nums[i] - nums[i - 1]);
 		}
 			
+		return sum;
+	}
+
+	
+	/**
+	 * Return the sum of the logs of the numbers given.
+	 * @param nums the numbers
+	 * @return sum of logs of numbers
+	 */
+	public static double logProb(double[] nums) {
+		double sum = 0;
+		for (int i = 1; i < nums.length; i++) {
+			sum += Math.log(nums[i]);
+		}
 		return sum;
 	}
 }
