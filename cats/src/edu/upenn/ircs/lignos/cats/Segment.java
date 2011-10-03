@@ -85,11 +85,6 @@ public class Segment {
 	
 	public Segment(String inputPath, String outputBase) {
 		this.inputPath = inputPath;
-		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
-		if (USE_STRESS && DROP_STRESS) outputBase += "reduced";
-		if (USE_PROB_MEM) outputBase += "_probmem"; else outputBase += "_perfectmem";
-		if (USE_LRP) outputBase += "_lrp";
-		if (BEAM_SIZE > 1) outputBase += "_beam_" + BEAM_SIZE;
 		this.outputBase = outputBase;
 	}
 	
@@ -124,6 +119,13 @@ public class Segment {
 		SEG_TRACE = new Boolean(props.getProperty(SEG_TRACE_PROP));
 		SEG_EVAL_TRACE = new Boolean(props.getProperty(SEG_EVAL_LOG_PROP));
 		LEX_EVAL_TRACE = new Boolean(props.getProperty(LEX_EVAL_LOG_PROP));
+		
+		// Set up the output path
+		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
+		if (USE_STRESS && DROP_STRESS) outputBase += "reduced";
+		if (USE_PROB_MEM) outputBase += "_probmem"; else outputBase += "_perfectmem";
+		if (USE_LRP) outputBase += "_lrp";
+		if (BEAM_SIZE > 1) outputBase += "_beam_" + BEAM_SIZE;
 		
 		return true;
 	}
