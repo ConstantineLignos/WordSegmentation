@@ -21,12 +21,15 @@ package edu.upenn.ircs.lignos.cats;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Properties;
 
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
@@ -36,26 +39,41 @@ import edu.upenn.ircs.lignos.cats.metrics.Evaluation.EvalMethod;
 import edu.upenn.ircs.lignos.cats.segmenters.*;
 
 public class Segment {
-	private static final boolean STRESS_SENSITIVE_LOOKUP = false;
+	// Parameter names used for reading from property files
+	private static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
+	private static final String TRUST_PROP = "Use_trust";
+	private static final String DROP_STRESS_PROP = "Drop_stress";
+	private static final String USE_STRESS_PROP = "Use_stress";
+	private static final String PROB_MEM_PROP = "Use_prob_mem";
+	private static final String PROB_MEM_AMOUNT_PROP = "Prob_mem_amount";
+	private static final String USE_LRP_PROP = "Use_lrp";
+	private static final String DECAY_AMT_PROP = "Decay_amount";
+	private static final String LONGEST_PROP = "Longest";
+	private static final String BEAM_SIZE_PROP = "Beam_size";
+	private static final String LEX_TRACE_PROP = "Lex_trace"; 
+	private static final String SEG_TRACE_PROP = "Seg_trace";
+	private static final String SEG_EVAL_LOG_PROP = "Seg_logging";
+	private static final String LEX_EVAL_LOG_PROP = "Lex_logging";
 	
 	// Basic constants that stay fixed
-	private static final boolean USE_TRUST = true;
-	private static final boolean LONGEST = false;
-	private static final boolean DROP_STRESS = true;
+	private boolean STRESS_SENSITIVE_LOOKUP;
+	private boolean USE_TRUST;
+	private boolean LONGEST;
+	private boolean DROP_STRESS;
 	
 	// Experimental controls
-	private static final boolean USE_STRESS = true;
-	private static final boolean USE_LRP = false;
-	private static final boolean USE_PROB_MEM = true;
-	private static final int BEAM_SIZE = 2;
-	private static final double PROB_AMOUNT = 0.05;
-	private static final double DECAY_AMOUNT = 0.0;
+	private boolean USE_STRESS;
+	private boolean USE_LRP;
+	private boolean USE_PROB_MEM;
+	private int BEAM_SIZE;
+	private double PROB_AMOUNT;
+	private double DECAY_AMOUNT;
 	
 	// Debugging info
-	private static final boolean LEX_TRACE = false;
-	private static final boolean SEG_TRACE = false;
-	private static final boolean SEG_EVAL_TRACE = true;
-	private static final boolean LEX_EVAL_TRACE = true;
+	private boolean LEX_TRACE;
+	private boolean SEG_TRACE;
+	private boolean SEG_EVAL_TRACE;
+	private boolean LEX_EVAL_TRACE;
 	
 	// Learner structures
 	private String inputPath;
@@ -65,7 +83,6 @@ public class Segment {
 	private Lexicon goldLexicon;
 	private Lexicon segLexicon;
 	
-	@SuppressWarnings("unused")
 	public Segment(String inputPath, String outputBase) {
 		this.inputPath = inputPath;
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
@@ -76,6 +93,41 @@ public class Segment {
 		this.outputBase = outputBase;
 	}
 	
+	/**
+	 * Set parameters from a property file
+	 * @param propertyFile Path to the property file
+	 */
+	public boolean setParams(String propertyFile) {
+		// TODO Consider having it fall back to defaults for missing props
+		
+		Properties props = new Properties();
+		try {
+			props.load(new FileReader(propertyFile));
+		} catch (FileNotFoundException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
+		// Look up each property
+		// TODO Consider checking for missing properties
+		STRESS_SENSITIVE_LOOKUP = new Boolean(props.getProperty(STRESS_SENSITIVE_PROP));
+		USE_TRUST = new Boolean(props.getProperty(TRUST_PROP));
+		LONGEST = new Boolean(props.getProperty(LONGEST_PROP));
+		DROP_STRESS = new Boolean(props.getProperty(DROP_STRESS_PROP));
+		USE_STRESS = new Boolean(props.getProperty(USE_STRESS_PROP));
+		USE_LRP = new Boolean(props.getProperty(USE_LRP_PROP));
+		USE_PROB_MEM = new Boolean(props.getProperty(PROB_MEM_PROP));
+		BEAM_SIZE = new Integer(props.getProperty(BEAM_SIZE_PROP));
+		PROB_AMOUNT = new Float(props.getProperty(PROB_MEM_AMOUNT_PROP));
+		DECAY_AMOUNT = new Float(props.getProperty(DECAY_AMT_PROP));
+		LEX_TRACE = new Boolean(props.getProperty(LEX_TRACE_PROP));
+		SEG_TRACE = new Boolean(props.getProperty(SEG_TRACE_PROP));
+		SEG_EVAL_TRACE = new Boolean(props.getProperty(SEG_EVAL_LOG_PROP));
+		LEX_EVAL_TRACE = new Boolean(props.getProperty(LEX_EVAL_LOG_PROP));
+		
+		return true;
+	}
+
 	/**
 	 * Load the input file, initializing goldUtterances and segUtterances
 	 */
@@ -118,6 +170,7 @@ public class Segment {
 	 */
 	private void segment() {
 		System.out.println("Segmenting...");
+		// TODO Allow configuration of which segmenter is used
 		Segmenter seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE);
 		for (Utterance utterance : segUtterances) {
 			utterance.setBoundaries(seg.segment(utterance, segLexicon, SEG_TRACE));
@@ -216,12 +269,98 @@ public class Segment {
 			System.err.println("Couldn't open output files");
 		}
 	}
+	
+	private static class CommentedProperties {
+		private Properties properties;
+		private String comments;
+	
+		public CommentedProperties(Properties properties, String comments) {
+			this.properties = properties;
+			this.comments = comments;
+		}
+
+		public Properties getProperties() {return properties;}
+
+		public String getComments() {return comments;}
+	}
+		
+	private static CommentedProperties defaultProperties() {
+		Properties props = new Properties();
+		StringBuilder comments = new StringBuilder();
+
+		// High level experimental parameters
+		comments.append("You must leave all parameters defined when editing this file. " +
+				"Leaving any parameters undefined may result in undefined behavior.\n");
+		comments.append(STRESS_SENSITIVE_PROP + ": Whether lexicon entries are stress-sensitive. " +
+				"Should be false unless you are changing the lookup functionality.\n");
+		props.setProperty(STRESS_SENSITIVE_PROP, "false");
+		comments.append(TRUST_PROP + ": Whether the segmenter is allowed to specify which " +
+				"boundaries are to be trusted when adding words to the lexicon.\n");
+		props.setProperty(TRUST_PROP, "true");
+		comments.append(DROP_STRESS_PROP + ": Whether adjacent stresses in the input should be " +
+				"reduced to better reflect natural speech patterns.\n");
+		props.setProperty(DROP_STRESS_PROP, "true");
+		comments.append(USE_STRESS_PROP + ": Whether the segmenter is given stress information.\n");
+		props.setProperty(USE_STRESS_PROP, "true");
+		
+		// Lexicon behavior parameters
+		comments.append(PROB_MEM_PROP + ": Whether recall of words from the lexicon is proabilistic.\n");
+		props.setProperty(PROB_MEM_PROP, "true");
+		comments.append(PROB_MEM_AMOUNT_PROP + ": Parameter for exponential function for probabilitic " + 
+				"lexicon recall.\n");
+		props.setProperty(PROB_MEM_AMOUNT_PROP, "0.05");
+		comments.append(USE_LRP_PROP + ": Whether lexicon scoring should use LRP. Experimental feature.\n");
+		props.setProperty(USE_LRP_PROP, "false");
+		comments.append(DECAY_AMT_PROP + ": Amount lexical entries decay after each utterance. " +
+				"Experimental feature. Set to 0.0 to disable decay.\n");
+		props.setProperty(DECAY_AMT_PROP, "0.0");
+		
+		// Segmenter behavior parameters
+		comments.append(LONGEST_PROP + ": Whether the segmenter is forced to use the longest words " +
+				"possible in its segmentation.\n");
+		props.setProperty(LONGEST_PROP, "false");
+		comments.append(BEAM_SIZE_PROP + ": Size of the beam segmenter uses. Set to 1 to disable " +
+				"beam search.\n");
+		props.setProperty(BEAM_SIZE_PROP, "2");
+		
+		// Logging parameters
+		comments.append(LEX_TRACE_PROP + ": Whether to print debugging information for lexicon " +
+				"stores and lookups\n");
+		props.setProperty(LEX_TRACE_PROP, "false");
+		comments.append(SEG_TRACE_PROP + ": Whether to print debugging information for " +
+				"segmentation.\n");
+		props.setProperty(SEG_TRACE_PROP, "false");
+		comments.append(SEG_EVAL_LOG_PROP + ": Whether to write out information about the " +
+				"evaluation of segmentation to a file.\n");
+		props.setProperty(SEG_EVAL_LOG_PROP, "true");
+		comments.append(LEX_EVAL_LOG_PROP + ": Whether to write out information about the " +
+				"evaluation of the lexicon to a file.\n");
+		props.setProperty(LEX_EVAL_LOG_PROP, "true");		
+
+		return new CommentedProperties(props, comments.toString());
+	}
 
 	public static void main(String[] argv) {
-		// Start up a segmenter
-		if (argv.length == 2) {
+		
+		if (argv.length == 1) {
+			if (argv[0].equals("--dump_defaults")) {
+				CommentedProperties comProps = defaultProperties();
+				try {
+					comProps.getProperties().store(System.out, comProps.getComments());
+				} catch (IOException e) {
+					System.err.println("Couldn't write defaults to standard out.");
+				}
+				return;
+			}
+		}
+		else if (argv.length == 3) {
+			// Start up a segmenter
 			long startTime = System.currentTimeMillis();
 			Segment seg = new Segment(argv[0], argv[1]);
+			if (!seg.setParams(argv[2])) {
+				System.err.println("The properties file " + argv[2] + " could not be read.");
+				System.exit(1);
+			}
 			if (!seg.load()) {
 				System.err.println("The input file " + argv[0] + " could not be read.");
 				System.exit(1);
@@ -234,10 +373,13 @@ public class Segment {
 			seg.writeOutput();
 			long endTime = System.currentTimeMillis() - startTime;
 			System.out.println("Run took " + endTime / 1000F + " seconds.");
+			return;
 		}
-		else {
-			System.err.println("Usage: Segment input output_base");
-			System.exit(2);
-		}
+		
+		// If we fell through, print usage
+		System.err.println("Usage: Segment properties_file input output_base");
+		System.err.println("To generate a properties file with defaults, run:");
+		System.err.println("Segment --dump_defaults");
+		System.exit(2);
 	}
 }
