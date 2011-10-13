@@ -237,9 +237,11 @@ public class Evaluation {
 			}
 		}
 		
-		// Print the stress information
-		System.out.println("Trochaic stress rate: " + 
+		// Print the stress information and reset it
+		System.out.println("Learner's lexicon trochaic stress rate: " + 
 				(trochaicWords / (float) numStressWords));
+		numStressWords = 0;
+		trochaicWords = 0;
 		
  		// Then check recall
 		Iterator<Word> goldIter = goldLex.getWords().iterator();
@@ -252,7 +254,19 @@ public class Evaluation {
 				if (log != null) log.println("Miss: " + Utils.formatUnits(gold.units, gold.stresses));
 				falseNegatives++;
 			}
+			
+			// Note the stress of the word if it's more than one syllable
+			if (gold.length > 1) {
+				if (gold.isTrochaic()) {
+					trochaicWords++;
+				}
+				numStressWords++;
+			}
 		}
+		
+		// Print the stress information and reset it
+		System.out.println("Gold lexicon trochaic stress rate: " + 
+				(trochaicWords / (float) numStressWords));
 		
 		return Result.calcResult(truePositives, falsePositives, falseNegatives);	
 	}

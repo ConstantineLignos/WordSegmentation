@@ -71,12 +71,17 @@ class CorpusStatistics:
         # Do a pass over types for stress information
         for word in self.word_counts:
             sylls = word.split(SYLL_SEP)
-            for idx, syll in enumerate(sylls):
-                # Add to the stress vector if it's multi-syllabic
-                if len(sylls) > 1:
-                    if pri_stress(syll):
-                        self.pri_stresses[idx] += 1
-                    self.any_stresses[idx] += 1
+            
+            # Skip single syllables
+            if len(sylls) == 1:
+                continue
+            
+            # Reduce stresses and count
+            syll_stresses = [has_pri_stress(syll) for syll in sylls]
+            for idx, stressed in enumerate(syll_stresses):      
+                if stressed:
+                    self.pri_stresses[idx] += 1
+                self.any_stresses[idx] += 1
                 
     def dump_corpus(self):
         """Dump statistics about the corpus."""
@@ -91,13 +96,13 @@ class CorpusStatistics:
         print "Unique syllables:", len(self.clean_syllable_counts)
         print "Sylls/unique syll:", self.num_sylls / float(len(self.clean_syllable_counts))
         
-        print "Syllable patterns:"
+        print "Primary stress rate per syllable position (multisyllabic words):"
         stress_numerators = [count for unused, count in sorted(self.pri_stresses.items())]
         stress_denomerators = [count for unused, count in sorted(self.any_stresses.items())]
         stress_rate = [count1 / float(count2) for count1, count2 in 
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
-                
+        
 
 def sort_dict(adict):
     """Sort a dictionary by descending values."""
@@ -116,7 +121,7 @@ def clean_syllable(syll):
     return re.sub(r"\d", "", syll)
 
 
-def pri_stress(syll):
+def has_pri_stress(syll):
     """Return whether a syllable has primary stress."""
     return PRI_STRESS_MARKER in syll
 
