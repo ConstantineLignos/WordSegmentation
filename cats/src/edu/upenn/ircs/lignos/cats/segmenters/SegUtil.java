@@ -238,9 +238,51 @@ public class SegUtil {
 	 */
 	public static double logProb(double[] nums) {
 		double sum = 0;
-		for (int i = 1; i < nums.length; i++) {
+		for (int i = 0; i < nums.length; i++) {
 			sum += Math.log(nums[i]);
 		}
 		return sum;
+	}
+	
+	
+	/**
+	 * Return the mean entropy of the logs of the numbers given.
+	 * @param nums the numbers
+	 * @return sum of logs of numbers
+	 */
+	public static double meanEnt(double[] nums) {
+		return logProb(nums) / nums.length;
+	}
+
+
+	/**
+	 * Return the winning beam index by sampling among scores based on their relative size.
+	 * @param beamScores scores of each hypothesis in the beam
+	 * @return index of the winning hypothesis
+	 */
+	public static int sampleScores(double[] beamScores) {
+		// First get the normalization denominator
+		double sum = 0;
+		for (int i = 0; i < beamScores.length; i++) {
+			sum += beamScores[i];
+		}
+		// Then normalize
+		double[] normScores = new double[beamScores.length];
+		for (int i = 0; i < beamScores.length; i++) {
+			normScores[i] = beamScores[i] / sum;
+		}
+		
+		// Draw a random number and find the winner using Shannon/Miller/Selfridge
+		double draw = Math.random();
+		sum = 0;
+		int winningIdx;
+		for (winningIdx = 0; winningIdx < beamScores.length; winningIdx++) {
+			sum += normScores[winningIdx];
+			if (sum > draw) {
+				break;
+			}
+		}
+		
+		return winningIdx;
 	}
 }

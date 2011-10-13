@@ -37,6 +37,8 @@ public class Word {
 	private double score;
 	public final int length;
 	public long timestamp;
+	private int[] observedStresses;
+	private int observedStressCount;
 	
 
 	/**
@@ -50,6 +52,9 @@ public class Word {
 		this.score = 0.0;
 		this.length = units.length;
 		this.timestamp = 0;
+		this.observedStresses = new int[stresses.length];
+		Arrays.fill(this.observedStresses, 0);
+		this.observedStressCount = 0;
 	}
 	
 	
@@ -66,6 +71,9 @@ public class Word {
 		this.score = initialScore;
 		this.length = units.length;
 		this.timestamp = timestamp;
+		this.observedStresses = new int[stresses.length];
+		Arrays.fill(this.observedStresses, 0);
+		this.observedStressCount = 0;
 	}
 	
 	
@@ -190,5 +198,18 @@ public class Word {
 	@Override
 	public int hashCode() {
 		return toString().hashCode();
+	}
+
+
+	/**
+	 * Note the stress that a word appeared with.
+	 * @param stresses stress the word appeared with
+	 */
+	public void countStress(Boolean[] stresses) {
+		// Add to observed stresses
+		for(int i = 0; i < stresses.length; i++) {
+			observedStresses[i] += stresses[i] ? 1 : 0;
+		}
+		observedStressCount++;
 	}
 }

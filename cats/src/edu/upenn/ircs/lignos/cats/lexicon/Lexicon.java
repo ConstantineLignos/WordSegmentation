@@ -216,6 +216,9 @@ public class Lexicon {
 		}
 		// Count the token
 		numTokens++;
+		
+		// Note the stress information
+		w.countStress(stresses);
 	}
 	
 	
@@ -314,7 +317,7 @@ public class Lexicon {
 			Word w = getWord((String[]) wordsUnits[i], ((Boolean[]) wordsStresses[i]));
 			// If the word is missing, give the initial score
 			if (w == null) {
-				wordsScores[i] = initScore;
+				wordsScores[i] = NORMALIZATION ? initScore / numTokens : initScore;
 			}
 			else {
 				// If it's there, smooth up to the minimum if needed
@@ -329,7 +332,7 @@ public class Lexicon {
 	 * @return minimum smoothed word score
 	 */
 	private double getSmoothingMin(){
-		return NORMALIZATION ? smoothingMin/numTokens : smoothingMin;
+		return NORMALIZATION ? smoothingMin / numTokens : smoothingMin;
 	}
 	
 	

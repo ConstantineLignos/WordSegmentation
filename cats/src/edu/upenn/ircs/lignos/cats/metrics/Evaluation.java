@@ -59,8 +59,6 @@ public class Evaluation {
 		int intTruePositives = 0;
 		int intFalsePositives = 0;
 		int intFalseNegatives = 0;
-		int intUnderSeg = 0;
-		int intOverSeg = 0;
 
 		// Write interval header
 		if (log != null) {
@@ -139,7 +137,7 @@ public class Evaluation {
 					}
 					else {
 						// Group error cases together so we can store the result
-						if (goldWords[i] != null) {
+						if (goldWords[i] != null && segWords[i] == null) {
 							falseNegatives++;
 							uttFalseNegatives++;
 							intFalseNegatives++;

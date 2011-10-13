@@ -32,7 +32,9 @@ import edu.upenn.ircs.lignos.cats.lexicon.Word;
  * subtracts known words from the utterance.
  */
 public class BeamSubtractiveSegmenter implements Segmenter {
+	// These two constants are for experimental features. Turn them on at your peril.
 	private final static boolean WIDESEARCH = false;
+	private final static boolean SAMPLE = false;
 	
 	private boolean longest;
 	private boolean useUSC;
@@ -151,20 +153,26 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		// Pick the one with the highest score
 		double maxScore = Double.NEGATIVE_INFINITY;
 		int maxScoreIdx = -1;
+		double[] beamScores = new double[beam.size()];
 		for (int i = 0; i < beam.size(); i++) {
 			double scores[] = lex.utteranceWordsScores(utt.getUnits(), 
 					utt.getStresses(), beam.get(i).segmentation);
 			// TODO: Make logProb scoring an option
 			double segScore =  SegUtil.geometricMean(scores);
-			//double segScore = SegUtil.logProb(scores);
 			if (trace) System.out.println(Utterance.makeSegText(utt.getUnits(), 
 					utt.getStresses(), beam.get(i).segmentation) +  " score: " + 
 					segScore);
 			
+			beamScores[i] = segScore;
 			if (segScore > maxScore) {
 				maxScore = segScore;
 				maxScoreIdx = i;
 			}
+		}
+		
+		if (SAMPLE) {
+			// Rather than choosing the best score, sample among the best scores
+			maxScoreIdx = SegUtil.sampleScores(beamScores);
 		}
 		
 		if (trace) System.out.println("Chose " + maxScoreIdx);
