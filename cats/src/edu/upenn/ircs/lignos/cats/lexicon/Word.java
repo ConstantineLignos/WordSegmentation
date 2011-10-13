@@ -212,4 +212,24 @@ public class Word {
 		}
 		observedStressCount++;
 	}
+	
+	
+	
+	/**
+	 * Return whether a word appears to be trochaic
+	 * @return whether the word appears to be trochaic
+	 */
+	public boolean isTrochaic() {
+		// Get the normalized stress rate for the word
+		double[] normStresses = new double[stresses.length];
+		for(int i = 0; i < stresses.length; i++) {
+			normStresses[i] = observedStresses[i] / (float) observedStressCount;
+		}
+		// Check whether the initial is above .5
+		return normStresses[0] > .5;
+	}
+	
+	
+	
+	
 }

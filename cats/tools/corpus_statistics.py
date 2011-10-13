@@ -97,9 +97,6 @@ class CorpusStatistics:
         stress_rate = [count1 / float(count2) for count1, count2 in 
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
-        
-        #top_words = sort_dict(self.word_counts)
-        #print_tuples(top_words[:20], "Words")
                 
 
 def sort_dict(adict):

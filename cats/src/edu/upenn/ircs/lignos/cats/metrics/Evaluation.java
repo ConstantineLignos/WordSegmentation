@@ -136,7 +136,6 @@ public class Evaluation {
 						intTruePositives++;
 					}
 					else {
-						// Group error cases together so we can store the result
 						if (goldWords[i] != null && segWords[i] == null) {
 							falseNegatives++;
 							uttFalseNegatives++;
@@ -206,6 +205,9 @@ public class Evaluation {
 		int falsePositives = 0;
 		int falseNegatives = 0;
 		
+		int numStressWords = 0;
+		int trochaicWords = 0;
+		
 		// First check precision. The iterator returns all items in the lexicon,
 		// some of which are not considered real words
 		Iterator<Word> segIter = segLex.getWords().iterator();
@@ -225,9 +227,21 @@ public class Evaluation {
 				if (log != null) log.println("FP: " + Utils.formatUnits(seg.units, seg.stresses));
 				falsePositives++;
 			}
+			
+			// Note the stress of the word if it's more than one syllable
+			if (seg.length > 1) {
+				if (seg.isTrochaic()) {
+					trochaicWords++;
+				}
+				numStressWords++;
+			}
 		}
 		
-		// Then check recall
+		// Print the stress information
+		System.out.println("Trochaic stress rate: " + 
+				(trochaicWords / (float) numStressWords));
+		
+ 		// Then check recall
 		Iterator<Word> goldIter = goldLex.getWords().iterator();
 
 		while (goldIter.hasNext()) {
