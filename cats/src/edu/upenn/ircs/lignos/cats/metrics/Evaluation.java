@@ -53,11 +53,13 @@ public class Evaluation {
 		// Corpus counters
 		int truePositives = 0;
 		int falsePositives = 0;
+		int trueNegatives = 0;
 		int falseNegatives = 0;
 
 		// Interval counters
 		int intTruePositives = 0;
 		int intFalsePositives = 0;
+		int intTrueNegatives = 0;
 		int intFalseNegatives = 0;
 
 		// Write interval header
@@ -88,6 +90,7 @@ public class Evaluation {
 			// Per-utterance counters
 			int uttTruePositives = 0;
 			int uttFalsePositives = 0;
+			int uttTrueNegatives = 0;
 			int uttFalseNegatives = 0;
 
 			// Skip everything if this is a totally unambiguous utterance
@@ -121,6 +124,11 @@ public class Evaluation {
 						uttFalsePositives++;
 						intFalsePositives++;
 					}
+					else {
+						trueNegatives++;
+						uttTrueNegatives++;
+						intTrueNegatives++;
+					}
 				}
 				break;
 			case WORDS:
@@ -146,6 +154,11 @@ public class Evaluation {
 							uttFalsePositives++;
 							intFalsePositives++;
 						}
+						else {
+							trueNegatives++;
+							uttTrueNegatives++;
+							intTrueNegatives++;
+						}
 						
 						// Track predicted word errors and log them
 						if (log != null && segWords[i] != null && goldWords[i] != null) {
@@ -163,7 +176,7 @@ public class Evaluation {
 			// Log the evaluation if needed
 			if (evalLog != null) {
 				Result r = Result.calcResult(uttTruePositives, uttFalsePositives, 
-						uttFalseNegatives);
+						uttFalseNegatives, uttTrueNegatives);
 
 				evalLog.println(gold.getSegText() + "," + seg.getSegText() + "," +
 						uttTruePositives + "," + uttFalsePositives + "," +
@@ -174,7 +187,7 @@ public class Evaluation {
 			if (log != null) {
 				if (method == EvalMethod.BOUNDARIES && nIntervalUtts % INTERVAL_SIZE == 0) {
 					Result r = Result.calcResult(intTruePositives, intFalsePositives, 
-							intFalseNegatives);
+							intFalseNegatives, intTrueNegatives);
 					log.println(nUtts + "," + r.toCSVString());
 					intTruePositives = intFalseNegatives = intFalsePositives = 0;
 					nIntervalUtts = 0;
@@ -183,7 +196,7 @@ public class Evaluation {
 		}
 
 		Result finalResult = Result.calcResult(truePositives, falsePositives, 
-				falseNegatives);
+				falseNegatives, trueNegatives);
 		if(log != null) {
 			switch (method) {
 			case BOUNDARIES: log.println("Final," + finalResult.toCSVString()); break;
@@ -204,6 +217,7 @@ public class Evaluation {
 		int truePositives = 0;
 		int falsePositives = 0;
 		int falseNegatives = 0;
+		int trueNegatives = 0;
 		
 		int numStressWords = 0;
 		int trochaicWords = 0;
@@ -268,7 +282,7 @@ public class Evaluation {
 		System.out.println("Gold lexicon trochaic stress rate: " + 
 				(trochaicWords / (float) numStressWords));
 		
-		return Result.calcResult(truePositives, falsePositives, falseNegatives);	
+		return Result.calcResult(truePositives, falsePositives, falseNegatives, trueNegatives);	
 	}
 	
 

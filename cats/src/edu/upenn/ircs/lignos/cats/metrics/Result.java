@@ -23,31 +23,41 @@ public class Result {
 	double precision;
 	double recall;
 	double fScore;
+	double hitRate;
+	double faRate;
+	double aPrime;
 	
-	private Result(double precision, double recall, double fScore) {
+	private Result(double precision, double recall, double fScore, double hitRate, double faRate, double aPrime) {
 		this.precision = precision;
 		this.recall = recall;
 		this.fScore = fScore;
+		this.hitRate = hitRate;
+		this.faRate = faRate;
+		this.aPrime = aPrime;
 	}
 	
 	public static Result calcResult(int truePositives, int falsePositives,
-			int falseNegatives) {
+			int falseNegatives, int trueNegatives) {
 		double precision = ((float) truePositives)/(truePositives + falsePositives);
 		double recall = ((float) truePositives)/(truePositives +falseNegatives);
 		double fScore = 2 * (precision * recall) / (precision + recall);
+		double hitRate = truePositives / (float) (truePositives + falseNegatives);
+		double faRate = falsePositives / (float) (falsePositives + trueNegatives);
+		double aPrime = .5 * ((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate));
+
 		
 		// Correct for any NaNs by changing to zero
 		precision = Double.isNaN(precision) ? 0.0 : precision;
 		recall = Double.isNaN(recall) ? 0.0 : recall;
 		fScore = Double.isNaN(fScore) ? 0.0 : fScore;
 		
-		Result r = new Result(precision, recall, fScore);
+		Result r = new Result(precision, recall, fScore, hitRate, faRate, aPrime);
 		return r;
 	}
 	
 	public String toString() {
-		return String.format("Precision: %4f, Recall: %4f, F-Score: %4f",
-				precision, recall, fScore);
+		return String.format("Precision: %4f, Recall: %4f, F-Score: %4f\nHit Rate: %.4f, FA Rate: %.4f, A': %.4f",
+				precision, recall, fScore, hitRate, faRate, aPrime);
 	}
 	
 	public String toCSVString() {
