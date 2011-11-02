@@ -19,16 +19,23 @@
 
 package edu.upenn.ircs.lignos.cats.segmenters;
 
-import java.util.Arrays;
-
 import edu.upenn.ircs.lignos.cats.Utterance;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 /**
- * A segmenter that inserts a boundary at every possible position.
+ * A segmenter that randomly inserts word boundaries.
  */
-public class UnitSegmenter implements Segmenter {
+public class RandomSegmenter implements Segmenter {
+	private double threshold = .5;
 	private int segs = 0;
+	
+	/**
+	 * Create a 
+	 * @param threshold
+	 */
+	public RandomSegmenter(double threshold) {
+		this.threshold = threshold;
+	}
 	
 	/*
 	 * Segment by marking each possible boundary as a boundary
@@ -37,9 +44,18 @@ public class UnitSegmenter implements Segmenter {
 	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Return all segmentation points as true
 		boolean[] boundaries = utterance.getBoundariesCopy();
-		Arrays.fill(boundaries, true);
-		segs += boundaries.length;
 		
+		// Randomly insert boundaries
+		for (int i=0; i<boundaries.length; i++) {
+			if (Math.random() < threshold) {
+				boundaries[i] = true;
+				segs++;
+			}
+			else {
+				boundaries[i] = false;				
+			}
+		}
+
 		// Increment the words used in the utterance.
 		lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
 				boundaries, null);

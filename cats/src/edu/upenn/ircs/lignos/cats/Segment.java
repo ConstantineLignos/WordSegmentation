@@ -40,6 +40,7 @@ import edu.upenn.ircs.lignos.cats.segmenters.*;
 
 public class Segment {
 	// Parameter names used for reading from property files
+	private static final String SEGMENTER_PROP = "Segmenter";
 	private static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
 	private static final String TRUST_PROP = "Use_trust";
 	private static final String DROP_STRESS_PROP = "Drop_stress";
@@ -49,19 +50,26 @@ public class Segment {
 	private static final String USE_LRP_PROP = "Use_lrp";
 	private static final String DECAY_AMT_PROP = "Decay_amount";
 	private static final String LONGEST_PROP = "Longest";
+	private static final String RANDOM_SEG_THRESHOLD_PROP = "Random_Seg_Rate";
 	private static final String BEAM_SIZE_PROP = "Beam_size";
 	private static final String LEX_TRACE_PROP = "Lex_trace"; 
 	private static final String SEG_TRACE_PROP = "Seg_trace";
 	private static final String SEG_EVAL_LOG_PROP = "Seg_logging";
 	private static final String LEX_EVAL_LOG_PROP = "Lex_logging";
 	
-	// Basic constants that stay fixed
+	// Known segmenters
+	private static final String SEGMENTER_BEAM_SUBTRACTIVE = "BeamSubtractive";
+	private static final String SEGMENTER_UNIT = "Unit";
+	private static final String SEGMENTER_UTTERANCE = "Utterance";
+	private static final String SEGMENTER_RANDOM = "Random";
+
+	// Experimental controls
+	private String SEGMENTER_NAME;
 	private boolean STRESS_SENSITIVE_LOOKUP;
 	private boolean USE_TRUST;
 	private boolean LONGEST;
+	private double RANDOM_SEG_THRESHOLD;
 	private boolean DROP_STRESS;
-	
-	// Experimental controls
 	private boolean USE_STRESS;
 	private boolean USE_LRP;
 	private boolean USE_PROB_MEM;
@@ -82,6 +90,7 @@ public class Segment {
 	private List<Utterance> segUtterances;
 	private Lexicon goldLexicon;
 	private Lexicon segLexicon;
+	
 	
 	public Segment(String inputPath, String outputBase) {
 		this.inputPath = inputPath;
@@ -104,7 +113,7 @@ public class Segment {
 			return false;
 		}
 		// Look up each property
-		// TODO Consider checking for missing properties
+		SEGMENTER_NAME = props.getProperty(SEGMENTER_PROP);
 		STRESS_SENSITIVE_LOOKUP = new Boolean(props.getProperty(STRESS_SENSITIVE_PROP));
 		USE_TRUST = new Boolean(props.getProperty(TRUST_PROP));
 		LONGEST = new Boolean(props.getProperty(LONGEST_PROP));
@@ -113,12 +122,13 @@ public class Segment {
 		USE_LRP = new Boolean(props.getProperty(USE_LRP_PROP));
 		USE_PROB_MEM = new Boolean(props.getProperty(PROB_MEM_PROP));
 		BEAM_SIZE = new Integer(props.getProperty(BEAM_SIZE_PROP));
-		PROB_AMOUNT = new Float(props.getProperty(PROB_MEM_AMOUNT_PROP));
-		DECAY_AMOUNT = new Float(props.getProperty(DECAY_AMT_PROP));
+		PROB_AMOUNT = new Double(props.getProperty(PROB_MEM_AMOUNT_PROP));
+		DECAY_AMOUNT = new Double(props.getProperty(DECAY_AMT_PROP));
 		LEX_TRACE = new Boolean(props.getProperty(LEX_TRACE_PROP));
 		SEG_TRACE = new Boolean(props.getProperty(SEG_TRACE_PROP));
 		SEG_EVAL_TRACE = new Boolean(props.getProperty(SEG_EVAL_LOG_PROP));
 		LEX_EVAL_TRACE = new Boolean(props.getProperty(LEX_EVAL_LOG_PROP));
+		RANDOM_SEG_THRESHOLD = new Double(props.getProperty(RANDOM_SEG_THRESHOLD_PROP));
 		
 		// Set up the output path
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
@@ -172,8 +182,26 @@ public class Segment {
 	 */
 	private void segment() {
 		System.out.println("Segmenting...");
-		// TODO Allow configuration of which segmenter is used
-		Segmenter seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE);
+		
+		// Create the segmenter
+		Segmenter seg; 
+		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
+			seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE);
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_UNIT)) {
+			seg = new UnitSegmenter();
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_UTTERANCE)) {
+			seg = new UtteranceSegmenter();
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
+			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD);
+		}
+		else {
+			throw new RuntimeException("Unknown segmenter specified: " + SEGMENTER_NAME);
+		}
+
+		// Segment
 		for (Utterance utterance : segUtterances) {
 			utterance.setBoundaries(seg.segment(utterance, segLexicon, SEG_TRACE));
 			if (SEG_TRACE) {
@@ -183,6 +211,8 @@ public class Segment {
 			// Tick the lexicon
 			segLexicon.tick();
 		}
+		
+		// Output stats
 		System.out.println(seg.getStats());
 		System.out.println("Done segmenting.");
 	}
@@ -293,6 +323,8 @@ public class Segment {
 		// High level experimental parameters
 		comments.append("You must leave all parameters defined when editing this file. " +
 				"Leaving any parameters undefined may result in undefined behavior.\n");
+		comments.append(SEGMENTER_PROP + ": Which segmenter to use.\n");
+		props.setProperty(SEGMENTER_PROP, "BeamSubtractive");
 		comments.append(STRESS_SENSITIVE_PROP + ": Whether lexicon entries are stress-sensitive. " +
 				"Should be false unless you are changing the lookup functionality.\n");
 		props.setProperty(STRESS_SENSITIVE_PROP, "false");
@@ -318,12 +350,14 @@ public class Segment {
 		props.setProperty(DECAY_AMT_PROP, "0.0");
 		
 		// Segmenter behavior parameters
-		comments.append(LONGEST_PROP + ": Whether the segmenter is forced to use the longest words " +
+		comments.append(LONGEST_PROP + ": Whether a subtractive segmenter is forced to use the longest words " +
 				"possible in its segmentation.\n");
 		props.setProperty(LONGEST_PROP, "false");
-		comments.append(BEAM_SIZE_PROP + ": Size of the beam segmenter uses. Set to 1 to disable " +
-				"beam search.\n");
+		comments.append(BEAM_SIZE_PROP + ": Size of the beam for the beam segmenter. Set to 1 to use " +
+				"greedy search.\n");
 		props.setProperty(BEAM_SIZE_PROP, "2");
+		comments.append(RANDOM_SEG_THRESHOLD_PROP + ": Rate at which the random segmenter places a boundary.\n");
+		props.setProperty(RANDOM_SEG_THRESHOLD_PROP, "0.5");
 		
 		// Logging parameters
 		comments.append(LEX_TRACE_PROP + ": Whether to print debugging information for lexicon " +
@@ -345,7 +379,7 @@ public class Segment {
 	public static void main(String[] argv) {
 		
 		if (argv.length == 1) {
-			if (argv[0].equals("--dump_defaults")) {
+			if (argv[0].equals("--dump-defaults")) {
 				CommentedProperties comProps = defaultProperties();
 				try {
 					comProps.getProperties().store(System.out, comProps.getComments());
@@ -381,7 +415,7 @@ public class Segment {
 		// If we fell through, print usage
 		System.err.println("Usage: Segment properties_file input output_base");
 		System.err.println("To generate a properties file with defaults, run:");
-		System.err.println("Segment --dump_defaults");
+		System.err.println("Segment --dump-defaults");
 		System.exit(2);
 	}
 }

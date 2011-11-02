@@ -147,7 +147,7 @@ public class Utterance {
 		List<String> unitList = new LinkedList<String>();
 		List<Boolean> stressList = new LinkedList<Boolean>();
 		List<Boolean> boundaryList = new LinkedList<Boolean>();
-		int position = 0;
+
 		Matcher boundaryMatcher = boundaryPattern.matcher(text);
 		// Find each boundary. If this is gold, mark any boundary that's a space.
 		// Otherwise don't mark any boundaries as non word boundaries.
@@ -171,7 +171,6 @@ public class Utterance {
 			Matcher stressMatcher = anyStressPattern.matcher(unit);
 			unitList.add(stressMatcher.replaceAll(""));
 			stressList.add(hasPrimaryStress(unit));
-			position++;
 		}
 		// Convert into arrays for fast access later.
 		boundaries = new boolean[boundaryList.size()];

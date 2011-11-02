@@ -216,10 +216,10 @@ public class Word {
 	
 	
 	/**
-	 * Return whether a word appears to be trochaic
-	 * @return whether the word appears to be trochaic
+	 * Return whether a word appears to be stress-initial
+	 * @return whether the word appears to be stress-initial
 	 */
-	public boolean isTrochaic() {
+	public boolean isStressInitial() {
 		// Get the normalized stress rate for the word
 		double[] normStresses = new double[stresses.length];
 		for(int i = 0; i < stresses.length; i++) {

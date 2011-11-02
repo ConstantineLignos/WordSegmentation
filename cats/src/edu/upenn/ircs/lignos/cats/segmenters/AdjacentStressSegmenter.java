@@ -24,8 +24,8 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 
 /**
- * @author lignos
- *
+ * A segmenter that segments by placing boundaries between adjacent strongly 
+ * stressed units.
  */
 public class AdjacentStressSegmenter implements Segmenter {
 	private int uscSegs = 0;

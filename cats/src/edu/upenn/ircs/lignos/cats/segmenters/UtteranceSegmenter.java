@@ -25,20 +25,19 @@ import edu.upenn.ircs.lignos.cats.Utterance;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 /**
- * A segmenter that inserts a boundary at every possible position.
+ * A segmenter that inserts no boundaries.
  */
-public class UnitSegmenter implements Segmenter {
+public class UtteranceSegmenter implements Segmenter {
 	private int segs = 0;
 	
 	/*
-	 * Segment by marking each possible boundary as a boundary
+	 * Segment by doing absolutely nothing.
 	 */
 	@Override
 	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
-		// Return all segmentation points as true
+		// Return an empty segmentation. We make a new blank array just to play it safe.
 		boolean[] boundaries = utterance.getBoundariesCopy();
-		Arrays.fill(boundaries, true);
-		segs += boundaries.length;
+		Arrays.fill(boundaries, false);
 		
 		// Increment the words used in the utterance.
 		lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 

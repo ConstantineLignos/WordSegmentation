@@ -220,7 +220,7 @@ public class Evaluation {
 		int trueNegatives = 0;
 		
 		int numStressWords = 0;
-		int trochaicWords = 0;
+		int initialStressWords = 0;
 		
 		// First check precision. The iterator returns all items in the lexicon,
 		// some of which are not considered real words
@@ -244,18 +244,18 @@ public class Evaluation {
 			
 			// Note the stress of the word if it's more than one syllable
 			if (seg.length > 1) {
-				if (seg.isTrochaic()) {
-					trochaicWords++;
+				if (seg.isStressInitial()) {
+					initialStressWords++;
 				}
 				numStressWords++;
 			}
 		}
 		
 		// Print the stress information and reset it
-		System.out.println("Learner's lexicon trochaic stress rate: " + 
-				(trochaicWords / (float) numStressWords));
+		System.out.println("Learner's lexicon stress-initial rate: " + 
+				(initialStressWords / (float) numStressWords));
 		numStressWords = 0;
-		trochaicWords = 0;
+		initialStressWords = 0;
 		
  		// Then check recall
 		Iterator<Word> goldIter = goldLex.getWords().iterator();
@@ -271,16 +271,16 @@ public class Evaluation {
 			
 			// Note the stress of the word if it's more than one syllable
 			if (gold.length > 1) {
-				if (gold.isTrochaic()) {
-					trochaicWords++;
+				if (gold.isStressInitial()) {
+					initialStressWords++;
 				}
 				numStressWords++;
 			}
 		}
 		
 		// Print the stress information and reset it
-		System.out.println("Gold lexicon trochaic stress rate: " + 
-				(trochaicWords / (float) numStressWords));
+		System.out.println("Gold lexicon stress-initial rate: " + 
+				(initialStressWords / (float) numStressWords));
 		
 		return Result.calcResult(truePositives, falsePositives, falseNegatives, trueNegatives);	
 	}
