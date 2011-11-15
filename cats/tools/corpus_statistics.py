@@ -18,6 +18,7 @@
 from collections import defaultdict
 import re
 import sys
+import csv
 
 PRI_STRESS_MARKER = "1"
 WORD_SEP = " "
@@ -43,6 +44,8 @@ class CorpusStatistics:
         self.word_initial_count = defaultdict(int)
         self.word_final_count =  defaultdict(int)
         
+        self.syll_transitions = defaultdict(lambda: defaultdict(int))
+        
     def load_corpus(self, corpus_path):
         """Load a corpus and process it."""
         with open(corpus_path, "Ur") as corpus_file:
@@ -50,6 +53,7 @@ class CorpusStatistics:
                 line = line.strip()
                 self.num_utterances += 1
                 
+                all_sylls = []
                 words = line.split(WORD_SEP)
                 for idx, word in enumerate(words):
                     self.word_counts[word] += 1
@@ -62,11 +66,24 @@ class CorpusStatistics:
                         self.word_final_count[word] += 1
                     if len(words) == 1:
                         self.word_isolation_count[word] += 1
+                    sylls = word.split(SYLL_SEP)
                     
-                    for syll in word.split(SYLL_SEP):
+                    for syll in sylls:
                         self.raw_syllable_counts[syll] += 1
                         self.clean_syllable_counts[clean_syllable(syll)] += 1
                         self.num_sylls += 1
+                        all_sylls.append(clean_syllable(syll))
+                        
+                # Loop over the syllables to compute transitional probabilities
+                for idx in range(1, len(all_sylls)):
+                    self.syll_transitions[all_sylls[idx - 1]][all_sylls[idx]] += 1
+                    
+
+        # Normalize the transitional probabilities
+        for (context, outcomes) in self.syll_transitions.items():
+            total_outcomes = sum(outcomes.values())
+            for outcome, count in outcomes.items():
+                self.syll_transitions[context][outcome] = float(count) / total_outcomes
                         
         # Do a pass over types for stress information
         for word in self.word_counts:
@@ -103,7 +120,41 @@ class CorpusStatistics:
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
         
-
+    def output_features(self, corpus_path, output_path):
+        """Output features for each word boundary."""
+        out_writer = csv.writer(open(output_path, 'wb'))
+        out_writer.writerow(("TP", "StressBefore", "StressAfter", "LeftFreq", "RightFreq", 
+                             "Boundary"))
+        delims = set((SYLL_SEP, WORD_SEP))
+        
+        # Loop over the input again
+        with open(corpus_path, "Ur") as corpus_file:
+            for line in corpus_file:
+                line = line.strip()
+                
+                splits = re.split(r"([" + SYLL_SEP + WORD_SEP + "])", line)
+                # If there are no splits, move on
+                if not splits:
+                    continue
+                
+                # Extract information
+                boundaries = [WORD_SEP == delim for delim in splits if delim in delims]
+                sylls = [syll for syll in splits if syll not in delims]
+                clean_sylls = [clean_syllable(syll) for syll in sylls]
+                stresses = [has_pri_stress(syll) for syll in sylls]
+                    
+                for idx, boundary in enumerate(boundaries):
+                    prev_syll = clean_sylls[idx]
+                    next_syll = clean_sylls[idx + 1]
+                    prev_stress = "TRUE" if stresses[idx] else "FALSE"
+                    next_stress = "TRUE" if stresses[idx + 1] else "FALSE"
+                    boundary = "TRUE" if boundary else "FALSE"
+                    trans_prob = self.syll_transitions[prev_syll][next_syll]
+                    prev_count = self.clean_syllable_counts[prev_syll]
+                    next_count = self.clean_syllable_counts[next_syll]
+                    out_writer.writerow((trans_prob, prev_stress, next_stress, prev_count, 
+                                         next_count, boundary))
+        
 def sort_dict(adict):
     """Sort a dictionary by descending values."""
     return sorted(adict.items(), key=lambda x: x[1], reverse=True)
@@ -130,13 +181,15 @@ def main():
     """Process a file and dump its statistics."""
     try:
         corpus_path = sys.argv[1]
+        output_path = sys.argv[2]
     except IndexError:
-        print >> sys.stderr, "Usage: corpus_statistics file"
+        print >> sys.stderr, "Usage: corpus_statistics file out_path"
         sys.exit(2)
         
     corpstats = CorpusStatistics()
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
+    corpstats.output_features(corpus_path, output_path)
 
 
 if __name__ == "__main__":
