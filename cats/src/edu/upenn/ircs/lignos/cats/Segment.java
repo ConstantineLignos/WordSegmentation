@@ -221,7 +221,7 @@ public class Segment {
 	/**
 	 * Evaluate the segmentation against gold
 	 */
-	private void eval() {
+	private Result eval() {
 		System.out.println("Evaluating...");
 		// TODO Refactor logging
 		PrintStream segLog;
@@ -273,6 +273,7 @@ public class Segment {
 		
 		System.out.println(lexResult);
 		System.out.println("Done evaluating.");
+		return boundaryResult;
 	}
 	
 
@@ -377,7 +378,10 @@ public class Segment {
 	}
 
 	public static void main(String[] argv) {
-		
+		callSegmenter(argv);
+	}
+	
+	public static Result callSegmenter(String[] argv){
 		if (argv.length == 1) {
 			if (argv[0].equals("--dump-defaults")) {
 				CommentedProperties comProps = defaultProperties();
@@ -386,7 +390,7 @@ public class Segment {
 				} catch (IOException e) {
 					System.err.println("Couldn't write defaults to standard out.");
 				}
-				return;
+				System.exit(1);
 			}
 		}
 		else if (argv.length == 3) {
@@ -405,17 +409,20 @@ public class Segment {
 			seg.segment();
 			segTime = System.currentTimeMillis() - segTime;
 			System.out.println("Segmentation took " + segTime / 1000F + " seconds.");
-			seg.eval();
+			Result evalResult = seg.eval();
 			seg.writeOutput();
 			long endTime = System.currentTimeMillis() - startTime;
 			System.out.println("Run took " + endTime / 1000F + " seconds.");
-			return;
+			return evalResult;
 		}
 		
 		// If we fell through, print usage
-		System.err.println("Usage: Segment properties_file input output_base");
+		System.err.println("Usage: Segment input output_base properties_file");
 		System.err.println("To generate a properties file with defaults, run:");
 		System.err.println("Segment --dump-defaults");
 		System.exit(2);
+		
+		// Satisfy compiler with guaranteed return
+		return null;
 	}
 }

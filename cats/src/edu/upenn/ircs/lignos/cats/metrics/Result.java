@@ -20,12 +20,12 @@
 package edu.upenn.ircs.lignos.cats.metrics;
 
 public class Result {
-	double precision;
-	double recall;
-	double fScore;
-	double hitRate;
-	double faRate;
-	double aPrime;
+	public final double precision;
+	public final double recall;
+	public final double fScore;
+	public final double hitRate;
+	public final double faRate;
+	public final double aPrime;
 	
 	private Result(double precision, double recall, double fScore, double hitRate, double faRate, double aPrime) {
 		this.precision = precision;
@@ -50,6 +50,7 @@ public class Result {
 		precision = Double.isNaN(precision) ? 0.0 : precision;
 		recall = Double.isNaN(recall) ? 0.0 : recall;
 		fScore = Double.isNaN(fScore) ? 0.0 : fScore;
+		aPrime = Double.isNaN(aPrime) ? 0.0 : aPrime;
 		
 		Result r = new Result(precision, recall, fScore, hitRate, faRate, aPrime);
 		return r;
