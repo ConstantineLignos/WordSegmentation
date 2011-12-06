@@ -43,31 +43,42 @@ class CorpusStatistics:
         self.word_isolation_count = defaultdict(int)
         self.word_initial_count = defaultdict(int)
         self.word_final_count =  defaultdict(int)
+        self.monosyll_utt_count = 0
         
         self.syll_transitions = defaultdict(lambda: defaultdict(int))
         
+        self.utt_new_word_counts = []
+
     def load_corpus(self, corpus_path):
         """Load a corpus and process it."""
         with open(corpus_path, "Ur") as corpus_file:
             for line in corpus_file:
                 line = line.strip()
                 self.num_utterances += 1
-                
+                new_words = 0
+
                 all_sylls = []
+                n_new_words = 0
                 words = line.split(WORD_SEP)
                 for idx, word in enumerate(words):
+                    # Explicitly check whether a word is in so we know
+                    # when to count new words
+                    if word not in self.word_counts:
+                        n_new_words += 1
+
                     self.word_counts[word] += 1
                     self.num_tokens += 1
                     
                     # Mark first, last, and isolation words
-                    if idx == 0:
-                        self.word_initial_count[word] += 1
-                    if idx == len(words) - 1:
-                        self.word_final_count[word] += 1
                     if len(words) == 1:
                         self.word_isolation_count[word] += 1
-                    sylls = word.split(SYLL_SEP)
+                    elif idx == 0:
+                        self.word_initial_count[word] += 1
+                    elif idx == len(words) - 1:
+                        self.word_final_count[word] += 1
                     
+                    # Count syllables
+                    sylls = word.split(SYLL_SEP)                    
                     for syll in sylls:
                         self.raw_syllable_counts[syll] += 1
                         self.clean_syllable_counts[clean_syllable(syll)] += 1
@@ -77,7 +88,14 @@ class CorpusStatistics:
                 # Loop over the syllables to compute transitional probabilities
                 for idx in range(1, len(all_sylls)):
                     self.syll_transitions[all_sylls[idx - 1]][all_sylls[idx]] += 1
+
+                # Check utterance syllable number
+                if len(all_sylls) == 1:
+                    self.monosyll_utt_count += 1
                     
+                # Count the new words
+                self.utt_new_word_counts.append((self.num_utterances, n_new_words, 
+                                                 len(self.word_counts), self.num_tokens))
 
         # Normalize the transitional probabilities
         for (context, outcomes) in self.syll_transitions.items():
@@ -106,12 +124,19 @@ class CorpusStatistics:
         print "Words/utterance:",  self.num_tokens / float(self.num_utterances)
         print "Sylls/utterance:", self.num_sylls / float(self.num_utterances)
         print "Sylls/word:", self.num_sylls / float(self.num_tokens)
-        print "Tokens:", self.num_tokens
-        print "Types:", len(self.word_counts)
+        print "Tokens, Types:", self.num_tokens, len(self.word_counts)
         print "Tokens/type", self.num_tokens / float(len(self.word_counts))
         print "Syllables:", self.num_sylls
         print "Unique syllables:", len(self.clean_syllable_counts)
         print "Sylls/unique syll:", self.num_sylls / float(len(self.clean_syllable_counts))
+        print "Tokens, types of words in isolation:", \
+            sum(self.word_isolation_count.values()), len(self.word_isolation_count)
+        print "Percent of types seen in isolation:", \
+            len(self.word_isolation_count) / float(len(self.word_counts))
+        print "Percent monosyllabic utterances:", \
+            self.monosyll_utt_count / float(self.num_utterances)
+        print "Percent one-word utterances:", \
+            sum(self.word_isolation_count.values()) / float(self.num_utterances)
         
         print "Primary stress rate per syllable position (multisyllabic words):"
         stress_numerators = [count for unused, count in sorted(self.pri_stresses.items())]
@@ -120,9 +145,9 @@ class CorpusStatistics:
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
         
-    def output_features(self, corpus_path, output_path):
+    def output_features(self, corpus_path, output_base):
         """Output features for each word boundary."""
-        out_writer = csv.writer(open(output_path, 'wb'))
+        out_writer = csv.writer(open(output_base + "_boundaries.csv", 'wb'))
         out_writer.writerow(("TP", "StressBefore", "StressAfter", "LeftFreq", "RightFreq", 
                              "Boundary"))
         delims = set((SYLL_SEP, WORD_SEP))
@@ -154,6 +179,17 @@ class CorpusStatistics:
                     next_count = self.clean_syllable_counts[next_syll]
                     out_writer.writerow((trans_prob, prev_stress, next_stress, prev_count, 
                                          next_count, boundary))
+
+    def output_lex_growth(self, output_base):
+        """Output features for each word boundary."""
+        out_file = open(output_base + "_lexgrowth.csv", 'wb')
+        out_writer = csv.writer(out_file)
+        out_writer.writerow(("utt", "n.newwords", "n.types", "n.tokens"))
+
+        for row in self.utt_new_word_counts:
+            out_writer.writerow(row)
+
+        out_file.close()
         
 def sort_dict(adict):
     """Sort a dictionary by descending values."""
@@ -181,15 +217,15 @@ def main():
     """Process a file and dump its statistics."""
     try:
         corpus_path = sys.argv[1]
-        output_path = sys.argv[2]
+        output_base = sys.argv[2]
     except IndexError:
-        print >> sys.stderr, "Usage: corpus_statistics file out_path"
+        print >> sys.stderr, "Usage: corpus_statistics file output_base"
         sys.exit(2)
         
     corpstats = CorpusStatistics()
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
-    corpstats.output_features(corpus_path, output_path)
+    corpstats.output_lex_growth(output_base)
 
 
 if __name__ == "__main__":
