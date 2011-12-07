@@ -55,7 +55,6 @@ class CorpusStatistics:
             for line in corpus_file:
                 line = line.strip()
                 self.num_utterances += 1
-                new_words = 0
 
                 all_sylls = []
                 n_new_words = 0
@@ -181,13 +180,30 @@ class CorpusStatistics:
                                          next_count, boundary))
 
     def output_lex_growth(self, output_base):
-        """Output features for each word boundary."""
+        """Output lexicon growth per utterance."""
         out_file = open(output_base + "_lexgrowth.csv", 'wb')
         out_writer = csv.writer(out_file)
         out_writer.writerow(("utt", "n.newwords", "n.types", "n.tokens"))
 
         for row in self.utt_new_word_counts:
             out_writer.writerow(row)
+
+        out_file.close()
+        
+    def output_lex(self, output_base):
+        """Output lexicon."""
+        out_file = open(output_base + "_lex.csv", 'wb')
+        out_writer = csv.writer(out_file)
+        out_writer.writerow(("rank", "word", "n.tokens", "n.isol", "n.first", "n.last"))
+        
+        # Sort lexicon by token count
+        sorted_word_counts = sorted(self.word_counts.items(), key=lambda x: x[1], reverse=True)
+
+        rank = 0
+        for word, count in sorted_word_counts:
+            rank += 1
+            out_writer.writerow((rank, word, count, self.word_isolation_count[word],
+                                 self.word_initial_count[word], self.word_final_count[word]))
 
         out_file.close()
         
@@ -226,6 +242,7 @@ def main():
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
     corpstats.output_lex_growth(output_base)
+    corpstats.output_lex(output_base)
 
 
 if __name__ == "__main__":
