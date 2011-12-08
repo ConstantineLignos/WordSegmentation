@@ -197,7 +197,7 @@ class CorpusStatistics:
         out_writer.writerow(("rank", "word", "n.tokens", "n.isol", "n.first", "n.last"))
         
         # Sort lexicon by token count
-        sorted_word_counts = sorted(self.word_counts.items(), key=lambda x: x[1], reverse=True)
+        sorted_word_counts = sort_dict_vals_reverse(self.word_counts)
 
         rank = 0
         for word, count in sorted_word_counts:
@@ -207,7 +207,8 @@ class CorpusStatistics:
 
         out_file.close()
         
-def sort_dict(adict):
+        
+def sort_dict_vals_reverse(adict):
     """Sort a dictionary by descending values."""
     return sorted(adict.items(), key=lambda x: x[1], reverse=True)
 
