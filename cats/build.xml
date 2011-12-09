@@ -1,4 +1,4 @@
-<project name="cats" default="compile" basedir=".">
+<project name="cats" default="dist" basedir=".">
     <description>
         Build file for CATS.
     </description>
