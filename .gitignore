@@ -1,7 +1,10 @@
 .DS_Store
 *~
 *.swp
+*.pyc
+*.class
 
 cats/out
 cats/build
+cats/bin
 cats/cats.jar
