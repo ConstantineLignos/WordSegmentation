@@ -1,0 +1,5 @@
+Repository structure:
+
+/cats	   Code for word segmentation simulations
+/data	   Word segmentation data
+/tools	   Tools for preparing input and analyzing output
