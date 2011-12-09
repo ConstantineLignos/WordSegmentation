@@ -1,0 +1,7 @@
+.DS_Store
+*~
+*.swp
+
+cats/out
+cats/build
+cats/cats.jar
