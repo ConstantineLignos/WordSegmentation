@@ -72,6 +72,7 @@ def load_esp_syll_dict(dict_path):
     lex = EspLex(dict_path)
         
     # Make a syllabified dictionary
+    # pylint: disable-msg=W0142
     return dict((word, esp_syllabify(*lex.get_pron(word))) for word in lex)
 
 
