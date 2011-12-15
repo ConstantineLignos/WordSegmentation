@@ -47,7 +47,6 @@ public class Segment {
 	private static final String USE_STRESS_PROP = "Use_stress";
 	private static final String PROB_MEM_PROP = "Use_prob_mem";
 	private static final String PROB_MEM_AMOUNT_PROP = "Prob_mem_amount";
-	private static final String USE_LRP_PROP = "Use_lrp";
 	private static final String DECAY_AMT_PROP = "Decay_amount";
 	private static final String LONGEST_PROP = "Longest";
 	private static final String RANDOM_SEG_THRESHOLD_PROP = "Random_Seg_Rate";
@@ -71,7 +70,6 @@ public class Segment {
 	private double RANDOM_SEG_THRESHOLD;
 	private boolean DROP_STRESS;
 	private boolean USE_STRESS;
-	private boolean USE_LRP;
 	private boolean USE_PROB_MEM;
 	private int BEAM_SIZE;
 	private double PROB_AMOUNT;
@@ -119,7 +117,6 @@ public class Segment {
 		LONGEST = new Boolean(props.getProperty(LONGEST_PROP));
 		DROP_STRESS = new Boolean(props.getProperty(DROP_STRESS_PROP));
 		USE_STRESS = new Boolean(props.getProperty(USE_STRESS_PROP));
-		USE_LRP = new Boolean(props.getProperty(USE_LRP_PROP));
 		USE_PROB_MEM = new Boolean(props.getProperty(PROB_MEM_PROP));
 		BEAM_SIZE = new Integer(props.getProperty(BEAM_SIZE_PROP));
 		PROB_AMOUNT = new Double(props.getProperty(PROB_MEM_AMOUNT_PROP));
@@ -134,7 +131,6 @@ public class Segment {
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
 		if (USE_STRESS && DROP_STRESS) outputBase += "reduced";
 		if (USE_PROB_MEM) outputBase += "_probmem"; else outputBase += "_perfectmem";
-		if (USE_LRP) outputBase += "_lrp";
 		if (BEAM_SIZE > 1) outputBase += "_beam_" + BEAM_SIZE;
 		
 		return true;
@@ -167,7 +163,7 @@ public class Segment {
 		goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances, STRESS_SENSITIVE_LOOKUP);
 		
 		// Create empty segmentation lexicon
-		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST, USE_LRP,
+		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
 				USE_PROB_MEM, PROB_AMOUNT, DECAY_AMOUNT);
 		
 		System.out.println("Done loading utterances.");
@@ -344,8 +340,6 @@ public class Segment {
 		comments.append(PROB_MEM_AMOUNT_PROP + ": Parameter for exponential function for probabilitic " + 
 				"lexicon recall.\n");
 		props.setProperty(PROB_MEM_AMOUNT_PROP, "0.05");
-		comments.append(USE_LRP_PROP + ": Whether lexicon scoring should use LRP. Experimental feature.\n");
-		props.setProperty(USE_LRP_PROP, "false");
 		comments.append(DECAY_AMT_PROP + ": Amount lexical entries decay after each utterance. " +
 				"Experimental feature. Set to 0.0 to disable decay.\n");
 		props.setProperty(DECAY_AMT_PROP, "0.0");

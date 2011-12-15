@@ -34,21 +34,17 @@ import java.util.Random;
 public class Lexicon {
 	private static final String KEY_DELIM = "|";
 	
-	// Amount to penalize when not using LRP
+	// Amount to penalize
+	// TODO: Make configurable
 	private static final int PENALTY = 1; 
-	// Initial score for LRP
-	private static final double INIT_SCORE = 0.5; 
-	// Smoothed score used for zero scores in LRP
-	private static final double LRP_SMOOTHING_MIN = 0.0; 
 	// TODO: Make configurable
 	private static final boolean NORMALIZATION = false;
 	
 	private final boolean stressSensitive;
 	private final boolean trace;
 	private final boolean useTrust;
-	private final boolean useLRP;
 	private final boolean useProbMem;
-	// Constant used for LRP or probabilistic memory
+	// Constant used for probabilistic memory
 	private final double probAmount;
 	// The initial score given to a word, used as a dummy score for potential new words
 	private final double initScore;
@@ -57,7 +53,8 @@ public class Lexicon {
 	// The number of times tick has been called since the creation of the lexicon
 	private long time;
 	// The number of tokens represented by the lexicon
-	// TODO: Token counting is not compatible with decay or LRP
+	// TODO: It's impossible to efficiently sync token count and decay. As every term
+	// gets the same denominator, this should not matter
 	private long numTokens;
 	// Our random number generator
 	private Random rand;
@@ -71,34 +68,16 @@ public class Lexicon {
 	 * @param trace whether to output tracing information
 	 */
 	public Lexicon(boolean stressSensitive, boolean trace, boolean useTrust,
-			boolean useLRP, boolean useProbMem,	double probAmount, 
-			double decayAmount) {
+			boolean useProbMem,	double probAmount, double decayAmount) {
 		this.stressSensitive = stressSensitive;
 		this.trace = trace;
 		this.useTrust = useTrust;
 		
-		// Set up LRP or normal frequency scoring
-		if (useLRP) {
-			this.useLRP = true;
-			this.useProbMem = false;
-			this.probAmount = probAmount;
-			this.initScore = INIT_SCORE;
-			this.smoothingMin = LRP_SMOOTHING_MIN;
-		}
-		else if (useProbMem){
-			this.useProbMem = true;
-			this.useLRP = false;
-			this.probAmount = probAmount;
-			this.initScore = 1.0;
-			this.smoothingMin = 1.0;
-		}
-		else {
-			this.useLRP = false;
-			this.useProbMem = false;
-			this.probAmount = 0.0;
-			this.initScore = 1.0;
-			this.smoothingMin = 1.0;
-		}
+		// Set up probabilistic memory
+		this.useProbMem = useProbMem;
+		this.probAmount = useProbMem ? probAmount : 0.0;
+		this.initScore = 1.0;
+		this.smoothingMin = 1.0;
 		
 		// Set up decay on words
 		if (decayAmount != 0.0) {
@@ -178,10 +157,6 @@ public class Lexicon {
 		if (w == null) {
 			return false;
 		}
-		else if (useLRP) {
-			// Probabilistically look up the word
-			return w.getScore(time) > rand.nextDouble();
-		}
 		else if (useProbMem) {
 			// Probabilistically look up the word
 			return probMemRecallRate(w.getScore(time)) > rand.nextDouble();
@@ -228,12 +203,7 @@ public class Lexicon {
 	 * @param w
 	 */
 	private void incWord(Word w) {
-		if (useLRP) {
-			w.increment(probAmount * (1 - w.getRawScore()), time);
-		}
-		else {
-			w.increment(time);
-		}
+		w.increment(time);
 		if (trace) System.out.println("Incremented " + w + " " + w.getScore(time));
 	}
 	
@@ -243,13 +213,8 @@ public class Lexicon {
 	 * @param w word to penalize
 	 */
 	public void penalizeWord(Word w) {
-		if (useLRP) {
-			w.decrement(probAmount * w.getRawScore());
-		}
-		else {
-			w.decrement(PENALTY);
-		}
-		// Uncount the token
+		w.decrement(PENALTY);
+		// Uncount the token. This is needed to keep normalization in sync
 		numTokens -= PENALTY;
 		if (trace) System.out.println("Penalized " + w + " " + w.getScore(time));
 	}
@@ -377,7 +342,7 @@ public class Lexicon {
 	public static Lexicon lexiconFromUtterances(Collection<Utterance> utterances, 
 			boolean stressSensitive) {
 		// Make a new lexicon with trace off
-		Lexicon lex = new Lexicon(stressSensitive, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(stressSensitive, false, false, false, 0.0, 0.0);
 		// Increment the words in each utterance
 		for (Utterance utt : utterances) {
 			lex.incUtteranceWords(utt.getUnits(), utt.getStresses(), 
