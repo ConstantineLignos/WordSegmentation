@@ -15,10 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import defaultdict
 import re
 import sys
 import csv
+from operator import itemgetter
+from collections import defaultdict
 
 PRI_STRESS_MARKER = "1"
 WORD_SEP = " "
@@ -29,7 +30,7 @@ PHON_SEP = "."
 class CorpusStatistics:
     """Track basic statistics regarding a segmentation corpus."""
     
-    def __init__(self):
+    def __init__(self, buffersize):
         # Simple counts
         self.word_counts = defaultdict(int) # Count of words, including stress
         self.raw_syllable_counts = defaultdict(int) # Count of syllables, including stress
@@ -47,7 +48,10 @@ class CorpusStatistics:
         
         self.syll_transitions = defaultdict(lambda: defaultdict(int))
         
+        # Track lexicon turnover statistics
         self.utt_new_word_counts = []
+        self.buffer = {}
+        self.buffersize = buffersize
 
     def load_corpus(self, corpus_path):
         """Load a corpus and process it."""
@@ -58,6 +62,7 @@ class CorpusStatistics:
 
                 all_sylls = []
                 n_new_words = 0
+                n_buffer_turnover = 0
                 words = line.split(WORD_SEP)
                 for idx, word in enumerate(words):
                     # Explicitly check whether a word is in so we know
@@ -67,6 +72,15 @@ class CorpusStatistics:
 
                     self.word_counts[word] += 1
                     self.num_tokens += 1
+                    
+                    # Update the rolling buffer, changing behavior based on whether it's full
+                    self.buffer[word] = self.num_utterances
+                    # Do any turnover required in the buffer
+                    if len(self.buffer) > self.buffersize:
+                        # Evict oldest
+                        oldest, _ = sort_dict_vals(self.buffer)[0]
+                        del self.buffer[oldest]
+                        n_buffer_turnover += 1
                     
                     # Mark first, last, and isolation words
                     if len(words) == 1:
@@ -93,7 +107,7 @@ class CorpusStatistics:
                     self.monosyll_utt_count += 1
                     
                 # Count the new words
-                self.utt_new_word_counts.append((self.num_utterances, n_new_words, 
+                self.utt_new_word_counts.append((self.num_utterances, n_new_words, n_buffer_turnover,
                                                  len(self.word_counts), self.num_tokens))
 
         # Normalize the transitional probabilities
@@ -138,8 +152,8 @@ class CorpusStatistics:
             sum(self.word_isolation_count.values()) / float(self.num_utterances)
         
         print "Primary stress rate per syllable position (multisyllabic words):"
-        stress_numerators = [count for unused, count in sorted(self.pri_stresses.items())]
-        stress_denomerators = [count for unused, count in sorted(self.any_stresses.items())]
+        stress_numerators = [count for dummy, count in sorted(self.pri_stresses.items())]
+        stress_denomerators = [count for dummy, count in sorted(self.any_stresses.items())]
         stress_rate = [count1 / float(count2) for count1, count2 in 
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
@@ -183,7 +197,7 @@ class CorpusStatistics:
         """Output lexicon growth per utterance."""
         out_file = open(output_base + "_lexgrowth.csv", 'wb')
         out_writer = csv.writer(out_file)
-        out_writer.writerow(("utt", "n.newwords", "n.types", "n.tokens"))
+        out_writer.writerow(("utt", "n.newwords", "n.buffturnover", "n.types", "n.tokens"))
 
         for row in self.utt_new_word_counts:
             out_writer.writerow(row)
@@ -210,7 +224,12 @@ class CorpusStatistics:
         
 def sort_dict_vals_reverse(adict):
     """Sort a dictionary by descending values."""
-    return sorted(adict.items(), key=lambda x: x[1], reverse=True)
+    return sorted(adict.items(), key=itemgetter(1), reverse=True)
+
+
+def sort_dict_vals(adict):
+    """Sort a dictionary by ascending values."""
+    return sorted(adict.items(), key=itemgetter(1))
 
 
 def print_tuples(tups, name):
@@ -222,7 +241,7 @@ def print_tuples(tups, name):
 
 def clean_syllable(syll):
     """Remove stress markings from a syllable."""
-    return re.sub(r"\d", "", syll)
+    return re.sub(r"\(*\d\)*", "", syll)
 
 
 def has_pri_stress(syll):
@@ -235,11 +254,12 @@ def main():
     try:
         corpus_path = sys.argv[1]
         output_base = sys.argv[2]
+        buffer_size = int(sys.argv[3])
     except IndexError:
-        print >> sys.stderr, "Usage: corpus_statistics file output_base"
+        print >> sys.stderr, "Usage: corpus_statistics file output_base buffer_size"
         sys.exit(2)
         
-    corpstats = CorpusStatistics()
+    corpstats = CorpusStatistics(buffer_size)
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
     corpstats.output_lex_growth(output_base)
@@ -249,5 +269,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-    

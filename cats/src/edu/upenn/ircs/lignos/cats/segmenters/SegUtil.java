@@ -32,6 +32,9 @@ public class SegUtil {
 	private static final Object[][] DUMMY_OBJECT_NESTED_ARRAY = new Object[0][0];
 	private static final Boolean[] DUMMY_BOOLEAN_ARRAY = new Boolean[0];
 	
+	// TODO Make this configurable
+	public static double PEAKINESS = 0.5;
+	
 	/**
 	 * Return the slice created by the most recent boundary inserted. Will
 	 * throw an exception if there are no boundaries in the boundary array given.
@@ -130,6 +133,53 @@ public class SegUtil {
 			}
 		}
 		return bestWord;
+	}
+	
+	/**
+	 * Randomly choose the best word, preferring words of higher score.
+	 * @param words the words to choose from
+	 * @return the selected  word
+	 */
+	public static Word chooseSampledBestScoreWord(ArrayList<Word> words, Lexicon lex) {
+		// First get the normalization denominator
+		double scoreSum = 0;
+		for (Word w : words) {
+			scoreSum += lex.getScore(w);
+		}
+		
+		// Then normalize
+		double[] normScores = new double[words.size()];
+		for (int i = 0; i < normScores.length; i++) {
+			normScores[i] = lex.getScore(words.get(i)) / scoreSum;
+		}
+		
+		// Bias the scores, normalize again
+		scoreSum = 0;
+		for (int i = 0; i < normScores.length; i++) {
+			normScores[i] = biasProb(normScores[i]);
+			scoreSum += normScores[i];
+		}
+		for (int i = 0; i < normScores.length; i++) {
+			normScores[i] = normScores[i] / scoreSum;
+		}
+		
+		// Draw a random number and find the winner using Shannon/Miller/Selfridge
+		double draw = Math.random();
+		double sum = 0;
+		int winningIdx;
+		for (winningIdx = 0; winningIdx < normScores.length; winningIdx++) {
+			sum += normScores[winningIdx];
+			if (sum > draw) {
+				break;
+			}
+		}
+		
+		return words.get(winningIdx);
+	}
+	
+	
+	private static double biasProb(double score) {
+		return Math.pow(Math.E, PEAKINESS * score);
 	}
 
 	
@@ -270,6 +320,16 @@ public class SegUtil {
 		double[] normScores = new double[beamScores.length];
 		for (int i = 0; i < beamScores.length; i++) {
 			normScores[i] = beamScores[i] / sum;
+		}
+		
+		// Bias the scores, normalize again
+		sum = 0;
+		for (int i = 0; i < normScores.length; i++) {
+			normScores[i] = biasProb(normScores[i]);
+			sum += normScores[i];
+		}
+		for (int i = 0; i < normScores.length; i++) {
+			normScores[i] = normScores[i] / sum;
 		}
 		
 		// Draw a random number and find the winner using Shannon/Miller/Selfridge

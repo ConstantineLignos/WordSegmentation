@@ -47,7 +47,7 @@ public class LexiconTest extends TestCase{
 	 */
 	public void testgetPrefixWordsBasic() {
 		// Build up a lexicon with "I" and "Ilikepie." as words
-		Lexicon lex = new Lexicon(true, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.0);
 		lex.rewardWord(i, iStress);
 		lex.rewardWord(iLikePie, iLikePieStress);
 		
@@ -69,7 +69,7 @@ public class LexiconTest extends TestCase{
 	 */
 	public void testgetPrefixWordsIndices() {
 		// Build up a lexicon with "like", "likepie", and "pie" as words
-		Lexicon lex = new Lexicon(true, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.0);
 		lex.rewardWord(like, likeStress);
 		lex.rewardWord(likePie, likePieStress);
 		lex.rewardWord(pie, pieStress);
@@ -96,7 +96,7 @@ public class LexiconTest extends TestCase{
 	 */
 	public void testgetPrefixWordsOneUnitUtt() {
 		// Build up a lexicon with "I" and "Ilikepie." as words
-		Lexicon lex = new Lexicon(true, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.0);
 		lex.rewardWord(i, iStress);
 		lex.rewardWord(iLikePie, iLikePieStress);
 		
@@ -117,7 +117,7 @@ public class LexiconTest extends TestCase{
 	 * Test passing a bad index
 	 */
 	public void testgetPrefixWordsBadIndices() {
-		Lexicon lex = new Lexicon(true, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.0);
 		try {
 			lex.getPrefixWords(iUtt, -1); 
 			fail("Should not allow negative indices");
@@ -135,8 +135,8 @@ public class LexiconTest extends TestCase{
 	 * Test basic decay functionality
 	 */
 	public void testDecayBasic() {
-		// Make a lexicon with LRP and decay
-		Lexicon lex = new Lexicon(true, false, false, true, false, 0.05, 0.1);
+		// Make a lexicon with decay
+		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.1);
 		lex.incUtteranceWords(i, iStress, new boolean[] {}, null);
 		
 		// Check the initial score

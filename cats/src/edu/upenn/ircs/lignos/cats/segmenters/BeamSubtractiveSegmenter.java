@@ -245,8 +245,14 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 					// If beamlock is on, we're going to sneakily change w
 					// to the best one and break out at the end
 					if (beamLock && first) {
-						w = longest ? prefixes.get(prefixes.size() - 1):
-							SegUtil.chooseBestScoreWord(prefixes, lexicon);
+						if (SAMPLE) {
+							w = longest ? prefixes.get(prefixes.size() - 1):
+								SegUtil.chooseSampledBestScoreWord(prefixes, lexicon);
+						}
+						else {
+							w = longest ? prefixes.get(prefixes.size() - 1):
+								SegUtil.chooseBestScoreWord(prefixes, lexicon);
+						}
 					}
 					
 					if (first && !beamLock && trace && prefixes.size() > 1) 

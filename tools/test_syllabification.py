@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable-msg=W0401,W0614
 from syllabification import *
 from eng_syll import *
 from esp_syll import *
