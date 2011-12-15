@@ -15,17 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import defaultdict
 import re
 import sys
 import csv
+from operator import itemgetter
+from collections import defaultdict
 
 PRI_STRESS_MARKER = "1"
 WORD_SEP = " "
 SYLL_SEP = "|"
 PHON_SEP = "."
 
-KEYSORTER = lambda x: x[1]
 
 class CorpusStatistics:
     """Track basic statistics regarding a segmentation corpus."""
@@ -224,11 +224,13 @@ class CorpusStatistics:
         
 def sort_dict_vals_reverse(adict):
     """Sort a dictionary by descending values."""
-    return sorted(adict.items(), key=KEYSORTER, reverse=True)
+    return sorted(adict.items(), key=itemgetter(1), reverse=True)
+
 
 def sort_dict_vals(adict):
     """Sort a dictionary by ascending values."""
-    return sorted(adict.items(), key=KEYSORTER)
+    return sorted(adict.items(), key=itemgetter(1))
+
 
 def print_tuples(tups, name):
     """Print tuples neatly."""
@@ -239,7 +241,7 @@ def print_tuples(tups, name):
 
 def clean_syllable(syll):
     """Remove stress markings from a syllable."""
-    return re.sub(r"\d", "", syll)
+    return re.sub(r"\(*\d\)*", "", syll)
 
 
 def has_pri_stress(syll):
@@ -267,5 +269,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-    
