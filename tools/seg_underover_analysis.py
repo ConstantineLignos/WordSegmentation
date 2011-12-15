@@ -83,9 +83,9 @@ def main():
         oversegs = errors[interval].oversegs
         
         ratio = float(oversegs) / undersegs if undersegs else "INF"
-        sum = oversegs - undersegs
+        seg_sum = oversegs - undersegs
         
-        print >> interval_segs_out, ",".join([str(item) for item in (interval, ratio, sum)])
+        print >> interval_segs_out, ",".join([str(item) for item in (interval, ratio, seg_sum)])
         
     # Bin together errors in the first and second 5k of segmentation
     intervals = sorted(errors.keys())
