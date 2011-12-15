@@ -152,8 +152,8 @@ class CorpusStatistics:
             sum(self.word_isolation_count.values()) / float(self.num_utterances)
         
         print "Primary stress rate per syllable position (multisyllabic words):"
-        stress_numerators = [count for unused, count in sorted(self.pri_stresses.items())]
-        stress_denomerators = [count for unused, count in sorted(self.any_stresses.items())]
+        stress_numerators = [count for dummy, count in sorted(self.pri_stresses.items())]
+        stress_denomerators = [count for dummy, count in sorted(self.any_stresses.items())]
         stress_rate = [count1 / float(count2) for count1, count2 in 
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate

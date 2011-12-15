@@ -21,10 +21,13 @@ from collections import defaultdict
 INTERVAL_SIZE = 3000
 
 class ErrorCounter:
+    """Simple struct-style class for counting errors."""
+    
     def __init__(self):
         self.undersegs = 0
         self.oversegs = 0
         self.error_counter = defaultdict(int)
+
 
 def sum_errors(errors, intervals):
     """Sum the word errors across the given intervals."""
@@ -73,7 +76,6 @@ def main():
         # Record the error
         errors[interval].error_counter[error] += 1
 
-
     # Now print each interval and the under/overseg ratio. We exclude the last interval
     # because it will be incomplete
     interval_segs_out = open(interval_segs_path, "w")
@@ -106,8 +108,6 @@ def main():
     for error, count in sorted(second_errors.items(), key=lambda x: x[1], reverse=True)[:50]:
         print >> interval_words_out, ",".join((error, str(count)))
         
-    
-
   
 if __name__ == "__main__":
     main()
