@@ -214,7 +214,7 @@ public class Utterance {
 		for (int i=0; i < units.length - 1; i++) {
 			out.append(units[i]);
 			if (stresses[i]) out.append("(1)");
-			out.append(segmentation[i] ? " " : "|");
+			out.append(segmentation[i] ? WORD_BOUNDARY : SYLL_BOUNDARY);
 		}
 		// Stick on final unit and stress
 		out.append(units[units.length - 1]);
