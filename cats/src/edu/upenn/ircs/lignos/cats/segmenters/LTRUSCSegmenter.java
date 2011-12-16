@@ -33,10 +33,10 @@ public class LTRUSCSegmenter implements Segmenter {
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
 	@Override
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
-		boolean[] segmentation = utterance.getBoundariesCopy();
+		Boolean[] segmentation = utterance.getBoundariesCopy();
 		String[] units = utterance.getUnits();
 		Boolean[] stresses = utterance.getStresses();
 		

@@ -34,9 +34,9 @@ public class UtteranceSegmenter implements Segmenter {
 	 * Segment by doing absolutely nothing.
 	 */
 	@Override
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Return an empty segmentation. We make a new blank array just to play it safe.
-		boolean[] boundaries = utterance.getBoundariesCopy();
+		Boolean[] boundaries = utterance.getBoundariesCopy();
 		Arrays.fill(boundaries, false);
 		
 		// Increment the words used in the utterance.

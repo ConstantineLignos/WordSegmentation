@@ -23,7 +23,7 @@ import edu.upenn.ircs.lignos.cats.Utterance;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 public interface Segmenter {
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace);
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace);
 	
 	public String getStats();
 }

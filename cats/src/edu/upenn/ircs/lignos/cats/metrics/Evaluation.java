@@ -84,8 +84,8 @@ public class Evaluation {
 			// Get utterances and boundaries
 			Utterance gold = goldIter.next();
 			Utterance seg = segIter.next();		
-			boolean[] goldBound = gold.getBoundariesCopy();
-			boolean[] segBound = seg.getBoundariesCopy();
+			Boolean[] goldBound = gold.getBoundariesCopy();
+			Boolean[] segBound = seg.getBoundariesCopy();
 
 			// Per-utterance counters
 			int uttTruePositives = 0;
@@ -293,7 +293,7 @@ public class Evaluation {
 	 */
 	public static String[] wordsPredicted(Utterance utt) {
 		String[] units = utt.getUnits();
-		boolean[] boundaries = utt.getBoundariesCopy();
+		Boolean[] boundaries = utt.getBoundariesCopy();
 		// The output of words is one longer than that boundaries as the first syllable doesn't
 		// get a leading boundary
 		String[] words = new String[boundaries.length + 1];

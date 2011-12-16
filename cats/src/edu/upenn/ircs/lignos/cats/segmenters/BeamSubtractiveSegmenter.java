@@ -63,9 +63,9 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	 * (if specified). 
 	 */
 	@Override
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Get the initial segmentation for the utterance
-		boolean[] segmentation = utterance.getBoundariesCopy();
+		Boolean[] segmentation = utterance.getBoundariesCopy();
 		// Clear beam and candidates, seed the beam
 		beam.clear();
 		candidates.clear();
@@ -195,7 +195,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			SegResult baseResult, boolean trace, boolean beamLock) {
 		// We keep a main segmentation for USC or no seg where the
 		// beam does not split and we recycle the original segResult.
-		boolean[] baseSegmentation = baseResult.segmentation;
+		Boolean[] baseSegmentation = baseResult.segmentation;
 		boolean[] baseTrusts = baseResult.trusts;
 		int baseIndex = baseResult.index;
 		// Additional pairs of segmentations and indices go here
@@ -265,7 +265,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 					// Copy the base index and modification so we have a fresh 
 					// copy each time
 					int index = baseIndex;
-					boolean[] segmentation = 
+					Boolean[] segmentation = 
 						Arrays.copyOf(baseSegmentation, baseSegmentation.length);
 					boolean[] trusts = 
 						Arrays.copyOf(baseTrusts, baseTrusts.length);

@@ -26,10 +26,10 @@ import junit.framework.TestCase;
 
 public class EvaluationTest extends TestCase{
 	String[] doggieSent1 = {"the", "do", "ggie", "ran"};
-	boolean[] doggieBound1 = {true, false, true};
+	Boolean[] doggieBound1 = {true, false, true};
 	
 	String[] doggieSent2 = {"do", "ggies", "run"};
-	boolean[] doggieBound2 = {false, true};
+	Boolean[] doggieBound2 = {false, true};
 	
 	/*
 	 * Test basic word extraction

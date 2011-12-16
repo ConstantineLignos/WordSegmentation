@@ -34,9 +34,9 @@ public class UnitSegmenter implements Segmenter {
 	 * Segment by marking each possible boundary as a boundary
 	 */
 	@Override
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Return all segmentation points as true
-		boolean[] boundaries = utterance.getBoundariesCopy();
+		Boolean[] boundaries = utterance.getBoundariesCopy();
 		Arrays.fill(boundaries, true);
 		segs += boundaries.length;
 		

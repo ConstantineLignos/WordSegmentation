@@ -395,10 +395,13 @@ public class Segment {
 				System.err.println("The properties file " + argv[2] + " could not be read.");
 				System.exit(1);
 			}
+			long loadTime = System.currentTimeMillis();
 			if (!seg.load()) {
 				System.err.println("The input file " + argv[0] + " could not be read.");
 				System.exit(1);
 			}
+			loadTime = System.currentTimeMillis() - loadTime;
+			System.out.println("Loading took " + loadTime / 1000F + " seconds.");
 			long segTime = System.currentTimeMillis();
 			seg.segment();
 			segTime = System.currentTimeMillis() - segTime;

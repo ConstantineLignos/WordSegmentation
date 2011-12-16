@@ -233,7 +233,7 @@ public class Lexicon {
 	 * @param boundaries the boundaries of the utterance
 	 */
 	public void incUtteranceWords(String[] units, Boolean[] stresses, 
-			boolean[] boundaries, boolean[] trusts) {
+			Boolean[] boundaries, boolean[] trusts) {
 		// If we're not using trusts, ignore the trusts passed
 		Boolean[] wordsTrusts;
 		if (!useTrust || trusts == null) {
@@ -269,7 +269,7 @@ public class Lexicon {
 	 * @return the frequency of the words in the utterance
 	 */
 	public double[] utteranceWordsScores(String[] units, Boolean[] stresses, 
-			boolean[] boundaries) {
+			Boolean[] boundaries) {
 		// Get slices of the stresses and units in this utterance
 		Object[][] wordsUnits = 
 			SegUtil.slicesFromAllBoundaries(units, boundaries);
@@ -361,7 +361,7 @@ public class Lexicon {
 	 * @param badSeg
 	 * @return
 	 */
-	public Word getSplitWord(Utterance utt, boolean[] goodSeg, boolean[] badSeg) {
+	public Word getSplitWord(Utterance utt, Boolean[] goodSeg, Boolean[] badSeg) {
 		// Find the word that they split on
 		// Get slices of the stresses and units in each segmentation
 		Object[][] goodWordsUnits = 

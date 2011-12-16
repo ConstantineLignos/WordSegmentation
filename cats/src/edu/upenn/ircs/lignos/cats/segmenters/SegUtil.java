@@ -42,7 +42,7 @@ public class SegUtil {
 	 * @param boundaries boundaries in the utterance
 	 * @return the subsequence corresponding to the last boundary
 	 */
-	public static Object[] sliceFromLastBoundary(Object[] sequence, boolean[] boundaries) {
+	public static Object[] sliceFromLastBoundary(Object[] sequence, Boolean[] boundaries) {
 		// Find the start and end of the word, which are the last and next
 		// to last boundary indices. If there's only one boundary, the next
 		// to last is effectively -1 (start of the text)
@@ -73,7 +73,7 @@ public class SegUtil {
 	 * @param boundaries boundaries in the utterance
 	 * @return the subsequence of the text corresponding to the newest word
 	 */
-	public static Object[] sliceFromFinalBoundary(Object[] sequence, boolean[] boundaries) {
+	public static Object[] sliceFromFinalBoundary(Object[] sequence, Boolean[] boundaries) {
 		// Find the last boundary. If no boundary is found, -1 is correct since
 		// when it is incremented it will be zero, the first index in the text
 		int last = -1;
@@ -93,7 +93,7 @@ public class SegUtil {
 	 * @param boundaries boundaries in the utterance
 	 * @return the subsequence of the text corresponding to the newest word
 	 */
-	public static Object[][] slicesFromAllBoundaries(Object[] sequence, boolean[] boundaries) {
+	public static Object[][] slicesFromAllBoundaries(Object[] sequence, Boolean[] boundaries) {
 		List<Object[]> slices = new LinkedList<Object[]>();
 		
 		int start = -1;
@@ -189,7 +189,7 @@ public class SegUtil {
 	 * @param boundaries the boundaries
 	 * @return trust level of each word in the boundaries
 	 */
-	public static Boolean[] wordsTrusts(boolean[] trusts, boolean[] boundaries) {
+	public static Boolean[] wordsTrusts(boolean[] trusts, Boolean[] boundaries) {
 		if (boundaries.length == 0) {
 			// Trust anything with no boundaries
 			return new Boolean[] {true};

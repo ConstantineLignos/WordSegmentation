@@ -137,7 +137,7 @@ public class LexiconTest extends TestCase{
 	public void testDecayBasic() {
 		// Make a lexicon with decay
 		Lexicon lex = new Lexicon(true, false, false, false, 0.0, 0.1);
-		lex.incUtteranceWords(i, iStress, new boolean[] {}, null);
+		lex.incUtteranceWords(i, iStress, new Boolean[] {}, null);
 		
 		// Check the initial score
 		double score1 = lex.getScore(lex.getWord(i, iStress));

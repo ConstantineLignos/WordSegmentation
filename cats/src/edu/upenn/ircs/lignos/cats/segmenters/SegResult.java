@@ -21,13 +21,13 @@ package edu.upenn.ircs.lignos.cats.segmenters;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
 class SegResult {
-	public boolean[] segmentation;
+	public Boolean[] segmentation;
 	public int index;
 	public boolean seenStress;
 	public boolean[] trusts;
 	
 	
-	public SegResult (boolean[] segmentation, int index, 
+	public SegResult (Boolean[] segmentation, int index, 
 			boolean seenStress, boolean[] trusts) {
 		this.segmentation = segmentation;
 		this.index = index;
@@ -47,7 +47,7 @@ class SegResult {
 	}
 
 
-	public static void recycleSegResult(boolean[] segmentation, int index, 
+	public static void recycleSegResult(Boolean[] segmentation, int index, 
 			boolean seenStress, boolean[] trusts, SegResult result) {
 		result.segmentation = segmentation;
 		result.index = index;

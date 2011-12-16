@@ -36,14 +36,15 @@ public class Utterance {
 	
 	// We use primitive arrays where possible, but since units and stresses
 	// should be able to be easily slices, we have to use Boolean
-	private boolean[] boundaries;
+	private Boolean[] boundaries;
 	private String[] units;
 	private Boolean[] stresses;
 	private String prettyString;
 	public final int length;
 	
 	// Pattern for finding boundaries
-	private final static Pattern boundaryPattern = Pattern.compile("([^| ]+)([ |]|$)");
+	private final static char WORD_BOUNDARY = ' ';
+	private final static char SYLL_BOUNDARY = '|';
 	
 	/**
 	 * Create an utterance from text, noting whether we should use gold standard
@@ -53,11 +54,6 @@ public class Utterance {
 	 * @param possBoundaries Possible segmentation points. If 
 	 */
 	public Utterance(String text, boolean gold, boolean reduceStress){
-		// Strip any word boundaries if this isn't gold standard
-		if (!gold) {
-			text = text.replaceAll(" ", "|");
-		}
-			
 		// Parse the word boundaries and set length
 		parseWordBoundaries(text, gold);
 		length = units.length;
@@ -73,7 +69,7 @@ public class Utterance {
 	 * @param stresses Stresses of the utterance
 	 * @param boundaries Boundaries in the utterance
 	 */
-	public Utterance(String[] units, Boolean[] stresses, boolean[] boundaries){
+	public Utterance(String[] units, Boolean[] stresses, Boolean[] boundaries){
 		this.units = units;
 		this.stresses = stresses;
 		this.boundaries = boundaries;
@@ -105,7 +101,7 @@ public class Utterance {
 	/**
 	 * @return a copy of the boundaries
 	 */
-	public boolean[] getBoundariesCopy() {
+	public Boolean[] getBoundariesCopy() {
 		return Arrays.copyOf(boundaries, boundaries.length);
 	}
 	
@@ -130,7 +126,7 @@ public class Utterance {
 	/**
 	 * @param boundaries the boundaries to set
 	 */
-	public void setBoundaries(boolean[] boundaries) {
+	public void setBoundaries(Boolean[] boundaries) {
 		this.boundaries = boundaries;
 	}
 
@@ -148,43 +144,49 @@ public class Utterance {
 		List<Boolean> stressList = new LinkedList<Boolean>();
 		List<Boolean> boundaryList = new LinkedList<Boolean>();
 
-		Matcher boundaryMatcher = boundaryPattern.matcher(text);
-		// Find each boundary. If this is gold, mark any boundary that's a space.
-		// Otherwise don't mark any boundaries as non word boundaries.
-		while (boundaryMatcher.find()) {
-			if (gold && " ".equals(boundaryMatcher.group(2))) {
-				// Space is boundary
-				boundaryList.add(true);
-			}
-			else if ("".equals(boundaryMatcher.group(2))) {
-				// We're at the end of the string, do nothing, we'll break just
-				// after the unit gets added
-				;
+		// Find each unit/boundary
+		int idx = 0; // Define outside so it carries over
+		int unitStart = -1; // -1 marks an invalid start
+		for (; idx < text.length(); idx++) {
+			char c = text.charAt(idx);
+			// If it's a boundary, finish off the unit
+			if (c == WORD_BOUNDARY || c == SYLL_BOUNDARY) {
+				// Do nothing if we didn't already have a unit built
+				if (unitStart == -1) {
+					continue;
+				}
+				
+				// Add the new unit
+				String unit = text.substring(unitStart, idx);
+				Matcher stressMatcher = anyStressPattern.matcher(unit);
+				unitList.add(stressMatcher.replaceAll(""));
+				stressList.add(hasPrimaryStress(unit));
+				
+				// Place a boundary if we're gold and this was a word boundary
+				boundaryList.add(gold && c == WORD_BOUNDARY);
+				
+				// Reset unit start
+				unitStart = -1;
 			}
 			else {
-				// This is not a word boundary, so put zero
-				boundaryList.add(false);
+				// Note the start if this is the beginning of a new unit
+				if (unitStart == -1) {
+					unitStart = idx;
+				}
 			}
-			// Add each unit (syllable, character, etc.), noting the stress
-			// but stripping it out of the unit itself
-			String unit = boundaryMatcher.group(1);
-			Matcher stressMatcher = anyStressPattern.matcher(unit);
-			unitList.add(stressMatcher.replaceAll(""));
-			stressList.add(hasPrimaryStress(unit));
+			
 		}
+		
+		// Put in whatever's left
+		String unit = text.substring(unitStart, idx);
+		Matcher stressMatcher = anyStressPattern.matcher(unit);
+		unitList.add(stressMatcher.replaceAll(""));
+		stressList.add(hasPrimaryStress(unit));	
+
 		// Convert into arrays for fast access later.
-		boundaries = new boolean[boundaryList.size()];
-		for (int i = 0; i < boundaries.length; i++) {
-			boundaries[i] = boundaryList.remove(0);
-		}
-		units = new String[unitList.size()];
-		for (int i = 0; i < units.length; i++) {
-			units[i] = unitList.remove(0);
-		}
-		stresses = new Boolean[stressList.size()];
-		for (int i = 0; i < stresses.length; i++) {
-			stresses[i] = stressList.remove(0);
-		}
+		boundaries = boundaryList.toArray(new Boolean[boundaryList.size()]);
+		units = unitList.toArray(new String[unitList.size()]);
+		stresses = stressList.toArray(new Boolean[stressList.size()]);
 	}
 	
 	/* (non-Javadoc)
@@ -217,7 +219,7 @@ public class Utterance {
 	 * @return the text representing the segmented version of the utterance
 	 */
 	public static String makeSegText(String[] units, Boolean[] stresses, 
-			boolean[] segmentation) {
+			Boolean[] segmentation) {
 		StringBuilder out = new StringBuilder();
 		// Connect all but the last unit with the right connection, then add on 
 		// the final one

@@ -34,11 +34,11 @@ public class AdjacentStressSegmenter implements Segmenter {
 	 * Segment by placing boundaries between adjacent strong stresses.
 	 */
 	@Override
-	public boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		String[] units = utterance.getUnits();
-		boolean[] segmentation = utterance.getBoundariesCopy();
+		Boolean[] segmentation = utterance.getBoundariesCopy();
 		Boolean[] stresses = utterance.getStresses();
 		
 		// Go through the n-1 words of the utterance, placing a boundary

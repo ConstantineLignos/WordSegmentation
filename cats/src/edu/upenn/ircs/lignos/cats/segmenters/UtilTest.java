@@ -25,15 +25,15 @@ import junit.framework.TestCase;
 
 public class UtilTest extends TestCase {
 	String[] pieSent = {"I", "like", "pie."};
-	boolean[] noBound = {false, false};
+	Boolean[] noBound = {false, false};
 	String[] i = {"I"};
-	boolean[] iBound = {true, false};
+	Boolean[] iBound = {true, false};
 	String[] like = {"like"};
-	boolean[] likeBound = {true, true};
+	Boolean[] likeBound = {true, true};
 	String[] ilike = {"I", "like"};
-	boolean[] ilikeBound = {false, true};
+	Boolean[] ilikeBound = {false, true};
 	String[] likepie = {"like", "pie."};
-	boolean[] likepieBound = {true, false};
+	Boolean[] likepieBound = {true, false};
 	String[] pie = {"pie."};
 	
 	String[][] allWords = {i, like, pie};
