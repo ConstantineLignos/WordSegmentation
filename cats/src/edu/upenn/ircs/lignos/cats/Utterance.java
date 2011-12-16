@@ -22,7 +22,6 @@ package edu.upenn.ircs.lignos.cats;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -144,7 +143,7 @@ public class Utterance {
 		List<Boolean> stressList = new LinkedList<Boolean>();
 		List<Boolean> boundaryList = new LinkedList<Boolean>();
 
-		// Find each unit/boundary
+		// Find each unit/boundary.
 		int idx = 0; // Define outside so it carries over
 		int unitStart = -1; // -1 marks an invalid start
 		for (; idx < text.length(); idx++) {
@@ -158,10 +157,9 @@ public class Utterance {
 				
 				// Add the new unit
 				String unit = text.substring(unitStart, idx);
-				Matcher stressMatcher = anyStressPattern.matcher(unit);
-				unitList.add(stressMatcher.replaceAll(""));
-				stressList.add(hasPrimaryStress(unit));
-				
+				unitList.add(anyStressPattern.matcher(unit).replaceAll(""));
+				stressList.add(primaryStressPattern.matcher(unit).matches());
+
 				// Place a boundary if we're gold and this was a word boundary
 				boundaryList.add(gold && c == WORD_BOUNDARY);
 				
@@ -177,11 +175,11 @@ public class Utterance {
 			
 		}
 		
-		// Put in whatever's left
+		// Put in whatever's left. This code is repeated from above; for optimization
+		// these were not refactored out
 		String unit = text.substring(unitStart, idx);
-		Matcher stressMatcher = anyStressPattern.matcher(unit);
-		unitList.add(stressMatcher.replaceAll(""));
-		stressList.add(hasPrimaryStress(unit));	
+		unitList.add(anyStressPattern.matcher(unit).replaceAll(""));
+		stressList.add(primaryStressPattern.matcher(unit).matches());	
 
 		// Convert into arrays for fast access later.
 		boundaries = boundaryList.toArray(new Boolean[boundaryList.size()]);
@@ -198,16 +196,6 @@ public class Utterance {
 			prettyString = Utils.formatUnits(units, stresses);
 		}
 		return prettyString;
-	}
-	
-	
-	/**
-	 * Returns whether the given unit has the primary stress marker.
-	 * @param unit the string to check for primary stress
-	 * @return true if the unit has the primary stress marker, false otherwise
-	 */
-	private static boolean hasPrimaryStress(String unit) {
-		return primaryStressPattern.matcher(unit).matches();
 	}
 	
 	/**
