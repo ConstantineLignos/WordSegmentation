@@ -347,11 +347,11 @@ public class Segment {
 				"reduced to better reflect natural speech patterns.\n");
 		props.setProperty(DROP_STRESS_PROP, "true");
 		comments.append(USE_STRESS_PROP + ": Whether the segmenter is given stress information.\n");
-		props.setProperty(USE_STRESS_PROP, "true");
+		props.setProperty(USE_STRESS_PROP, "false");
 		
 		// Lexicon behavior parameters
 		comments.append(PROB_MEM_PROP + ": Whether recall of words from the lexicon is proabilistic.\n");
-		props.setProperty(PROB_MEM_PROP, "true");
+		props.setProperty(PROB_MEM_PROP, "false");
 		comments.append(PROB_MEM_AMOUNT_PROP + ": Parameter for exponential function for probabilitic " + 
 				"lexicon recall.\n");
 		props.setProperty(PROB_MEM_AMOUNT_PROP, "0.05");
