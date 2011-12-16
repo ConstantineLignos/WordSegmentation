@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Properties;
 
+import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation;
@@ -46,6 +47,9 @@ public class Segment {
 	private static final String DROP_STRESS_PROP = "Drop_stress";
 	private static final String USE_STRESS_PROP = "Use_stress";
 	private static final String PROB_MEM_PROP = "Use_prob_mem";
+	private static final String NORMALIZATION_PROP = "Lex_normalization";
+	private static final String RANDOMIZATION_PROP = "Use_randomization";
+	private static final String SUBSEQDISCOUNT_PROP = "Use_subseqdiscount";
 	private static final String PROB_MEM_AMOUNT_PROP = "Prob_mem_amount";
 	private static final String DECAY_AMT_PROP = "Decay_amount";
 	private static final String LONGEST_PROP = "Longest";
@@ -71,6 +75,9 @@ public class Segment {
 	private boolean DROP_STRESS;
 	private boolean USE_STRESS;
 	private boolean USE_PROB_MEM;
+	private boolean USE_SUBSEQ_DISCOUNT;
+	private boolean NORMALIZATION;
+	private boolean RANDOMIZATION;
 	private int BEAM_SIZE;
 	private double PROB_AMOUNT;
 	private double DECAY_AMOUNT;
@@ -88,6 +95,7 @@ public class Segment {
 	private List<Utterance> segUtterances;
 	private Lexicon goldLexicon;
 	private Lexicon segLexicon;
+	private SubSeqCounter counter;
 	
 	
 	public Segment(String inputPath, String outputBase) {
@@ -126,6 +134,9 @@ public class Segment {
 		SEG_EVAL_TRACE = new Boolean(props.getProperty(SEG_EVAL_LOG_PROP));
 		LEX_EVAL_TRACE = new Boolean(props.getProperty(LEX_EVAL_LOG_PROP));
 		RANDOM_SEG_THRESHOLD = new Double(props.getProperty(RANDOM_SEG_THRESHOLD_PROP));
+		NORMALIZATION = new Boolean(props.getProperty(NORMALIZATION_PROP));
+		RANDOMIZATION = new Boolean(props.getProperty(RANDOMIZATION_PROP));
+		USE_SUBSEQ_DISCOUNT = new Boolean(props.getProperty(SUBSEQDISCOUNT_PROP));
 		
 		// Set up the output path
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
@@ -164,7 +175,10 @@ public class Segment {
 		
 		// Create empty segmentation lexicon
 		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
-				USE_PROB_MEM, PROB_AMOUNT, DECAY_AMOUNT);
+				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT);
+		
+		// Create empty counter
+		counter = USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
 		
 		System.out.println("Done loading utterances.");
 		
@@ -182,16 +196,17 @@ public class Segment {
 		// Create the segmenter
 		Segmenter seg; 
 		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
-			seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE);
+			seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE, segLexicon, counter, 
+					RANDOMIZATION);
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_UNIT)) {
-			seg = new UnitSegmenter();
+			seg = new UnitSegmenter(segLexicon);
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_UTTERANCE)) {
-			seg = new UtteranceSegmenter();
+			seg = new UtteranceSegmenter(segLexicon);
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
-			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD);
+			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD, segLexicon);
 		}
 		else {
 			throw new RuntimeException("Unknown segmenter specified: " + SEGMENTER_NAME);
@@ -199,7 +214,7 @@ public class Segment {
 
 		// Segment
 		for (Utterance utterance : segUtterances) {
-			utterance.setBoundaries(seg.segment(utterance, segLexicon, SEG_TRACE));
+			utterance.setBoundaries(seg.segment(utterance, SEG_TRACE));
 			if (SEG_TRACE) {
 				System.out.println("Segmentation:" + utterance.getSegText());
 			}
@@ -343,6 +358,8 @@ public class Segment {
 		comments.append(DECAY_AMT_PROP + ": Amount lexical entries decay after each utterance. " +
 				"Experimental feature. Set to 0.0 to disable decay.\n");
 		props.setProperty(DECAY_AMT_PROP, "0.0");
+		comments.append(NORMALIZATION_PROP + ": Whether to normalize scores in the lexicon.\n");
+		props.setProperty(NORMALIZATION_PROP, "false");
 		
 		// Segmenter behavior parameters
 		comments.append(LONGEST_PROP + ": Whether a subtractive segmenter is forced to use the longest words " +
@@ -353,6 +370,10 @@ public class Segment {
 		props.setProperty(BEAM_SIZE_PROP, "2");
 		comments.append(RANDOM_SEG_THRESHOLD_PROP + ": Rate at which the random segmenter places a boundary.\n");
 		props.setProperty(RANDOM_SEG_THRESHOLD_PROP, "0.5");
+		comments.append(RANDOMIZATION_PROP + ": Whether to randomize word subtraction and hypothesis selection.\n");
+		props.setProperty(RANDOMIZATION_PROP, "false");
+		comments.append(SUBSEQDISCOUNT_PROP + ": Whether to divide words scores by subsequence frequency.\n");
+		props.setProperty(SUBSEQDISCOUNT_PROP, "false");
 		
 		// Logging parameters
 		comments.append(LEX_TRACE_PROP + ": Whether to print debugging information for lexicon " +

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
+import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
 
@@ -32,12 +33,12 @@ import edu.upenn.ircs.lignos.cats.lexicon.Word;
  * subtracts known words from the utterance.
  */
 public class BeamSubtractiveSegmenter implements Segmenter {
-	// These two constants are for experimental features. Turn them on at your peril.
+	// These constants are for experimental features. Turn them on at your peril.
 	private final static boolean WIDESEARCH = false;
-	private final static boolean SAMPLE = false;
 	
 	private boolean longest;
 	private boolean useUSC;
+	private boolean randomize;
 	private int beamSize;
 	private ArrayList<SegResult> beam;
 	private ArrayList<SegResult> candidates;
@@ -47,10 +48,18 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	
 	private int uscSegs = 0;
 	private int subtractionSegs = 0;
+	private Lexicon lexicon;
+	private SubSeqCounter counter;
+
 	
-	public BeamSubtractiveSegmenter(boolean longest, boolean useUSC, int beamSize) {
+	public BeamSubtractiveSegmenter(boolean longest, boolean useUSC, int beamSize, Lexicon lexicon, 
+			SubSeqCounter counter, boolean randomize) {
 		this.beamSize = beamSize;
 		this.useUSC = useUSC;
+		this.lexicon = lexicon;
+		this.counter = counter;
+		this.randomize = randomize;
+		
 		// Create the beams. These are reused each time for efficiency
 		beam = new ArrayList<SegResult>(beamSize);
 		candidates = new ArrayList<SegResult>(beamSize * 2);
@@ -63,7 +72,12 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	 * (if specified). 
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean trace) {
+		// Count subsequences
+		if (counter != null) {
+			counter.incAllSubSeqs(utterance.getUnits());
+		}
+		
 		// Get the initial segmentation for the utterance
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		// Clear beam and candidates, seed the beam
@@ -115,7 +129,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			
 			// If we're all done, pick the best one
 			if (allDone) {
-				SegResult bestSeg = pickBestSeg(utterance, beam, lexicon, trace);
+				SegResult bestSeg = pickBestSeg(utterance, beam, lexicon, counter, trace);
 				// Increment the words used
 				lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
 						bestSeg.segmentation, bestSeg.trusts);
@@ -142,7 +156,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	
 	
 	private SegResult pickBestSeg(Utterance utt, ArrayList<SegResult> beam, 
-			Lexicon lex, boolean trace) {
+			Lexicon lex, SubSeqCounter counter, boolean trace) {
 		// If the beam size is one, just return the only item
 		if (beam.size() == 1) {
 			return beam.get(0);
@@ -156,8 +170,8 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		double[] beamScores = new double[beam.size()];
 		for (int i = 0; i < beam.size(); i++) {
 			double scores[] = lex.utteranceWordsScores(utt.getUnits(), 
-					utt.getStresses(), beam.get(i).segmentation);
-			// TODO: Make logProb scoring an option
+					utt.getStresses(), beam.get(i).segmentation, counter);
+			// TODO: Make other ways of  scoring an option
 			double segScore =  SegUtil.geometricMean(scores);
 			if (trace) System.out.println(Utterance.makeSegText(utt.getUnits(), 
 					utt.getStresses(), beam.get(i).segmentation) +  " score: " + 
@@ -170,7 +184,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			}
 		}
 		
-		if (SAMPLE) {
+		if (randomize) {
 			// Rather than choosing the best score, sample among the best scores
 			maxScoreIdx = SegUtil.sampleScores(beamScores);
 		}
@@ -245,13 +259,13 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 					// If beamlock is on, we're going to sneakily change w
 					// to the best one and break out at the end
 					if (beamLock && first) {
-						if (SAMPLE) {
+						if (randomize) {
 							w = longest ? prefixes.get(prefixes.size() - 1):
-								SegUtil.chooseSampledBestScoreWord(prefixes, lexicon);
+								SegUtil.chooseSampledBestScoreWord(prefixes, lexicon, counter);
 						}
 						else {
 							w = longest ? prefixes.get(prefixes.size() - 1):
-								SegUtil.chooseBestScoreWord(prefixes, lexicon);
+								SegUtil.chooseBestScoreWord(prefixes, lexicon, counter);
 						}
 					}
 					

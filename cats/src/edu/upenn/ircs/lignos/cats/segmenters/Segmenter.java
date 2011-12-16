@@ -20,10 +20,9 @@
 package edu.upenn.ircs.lignos.cats.segmenters;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
-import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 public interface Segmenter {
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace);
+	public Boolean[] segment(Utterance utterance, boolean trace);
 	
 	public String getStats();
 }

@@ -21,6 +21,7 @@ package edu.upenn.ircs.lignos.cats.lexicon;
 
 import edu.upenn.ircs.lignos.cats.Utils;
 import edu.upenn.ircs.lignos.cats.Utterance;
+import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.segmenters.SegUtil;
 import gnu.trove.THashMap;
 
@@ -37,13 +38,12 @@ public class Lexicon {
 	// Amount to penalize
 	// TODO: Make configurable
 	private static final int PENALTY = 1; 
-	// TODO: Make configurable
-	private static final boolean NORMALIZATION = false;
 	
 	private final boolean stressSensitive;
 	private final boolean trace;
 	private final boolean useTrust;
 	private final boolean useProbMem;
+	private final boolean NORMALIZATION;
 	// Constant used for probabilistic memory
 	private final double probAmount;
 	// The initial score given to a word, used as a dummy score for potential new words
@@ -67,11 +67,12 @@ public class Lexicon {
 	 * @param stressSensitive whether the lexicon should take stress into account
 	 * @param trace whether to output tracing information
 	 */
-	public Lexicon(boolean stressSensitive, boolean trace, boolean useTrust,
-			boolean useProbMem,	double probAmount, double decayAmount) {
+	public Lexicon(boolean stressSensitive, boolean trace, boolean useTrust, boolean useProbMem,
+			boolean useNorm, double probAmount, double decayAmount) {
 		this.stressSensitive = stressSensitive;
 		this.trace = trace;
 		this.useTrust = useTrust;
+		this.NORMALIZATION = useNorm;
 		
 		// Set up probabilistic memory
 		this.useProbMem = useProbMem;
@@ -266,10 +267,11 @@ public class Lexicon {
 	 * @param units the units of the utterance
 	 * @param stresses the stresses of the utterance
 	 * @param boundaries the boundaries of the utterance
+	 * @param counter the subsequence counter to discount scores by, null if not needed
 	 * @return the frequency of the words in the utterance
 	 */
-	public double[] utteranceWordsScores(String[] units, Boolean[] stresses, 
-			Boolean[] boundaries) {
+	public double[] utteranceWordsScores(String[] units, Boolean[] stresses, Boolean[] boundaries, 
+			SubSeqCounter counter) {
 		// Get slices of the stresses and units in this utterance
 		Object[][] wordsUnits = 
 			SegUtil.slicesFromAllBoundaries(units, boundaries);
@@ -282,11 +284,11 @@ public class Lexicon {
 			Word w = getWord((String[]) wordsUnits[i], ((Boolean[]) wordsStresses[i]));
 			// If the word is missing, give the initial score
 			if (w == null) {
-				wordsScores[i] = NORMALIZATION ? initScore / numTokens : initScore;
+				wordsScores[i] = getNewWordScore();
 			}
 			else {
 				// If it's there, smooth up to the minimum if needed
-				wordsScores[i] = Math.max(getScore(w), getSmoothingMin());
+				wordsScores[i] = getScore(w, counter);
 			}
 		}
 		return wordsScores;
@@ -300,6 +302,13 @@ public class Lexicon {
 		return NORMALIZATION ? smoothingMin / numTokens : smoothingMin;
 	}
 	
+	/**
+	 * Gives the new word score taking normalization into account.
+	 * @return new word score
+	 */
+	private double getNewWordScore(){
+		return NORMALIZATION ? initScore / numTokens : initScore;
+	}
 	
 	/**
 	 * Return an ArrayList of Words that are prefixes of the utterance at the given
@@ -342,7 +351,7 @@ public class Lexicon {
 	public static Lexicon lexiconFromUtterances(Collection<Utterance> utterances, 
 			boolean stressSensitive) {
 		// Make a new lexicon with trace off
-		Lexicon lex = new Lexicon(stressSensitive, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(stressSensitive, false, false, false, false, 0.0, 0.0);
 		// Increment the words in each utterance
 		for (Utterance utt : utterances) {
 			lex.incUtteranceWords(utt.getUnits(), utt.getStresses(), 
@@ -403,8 +412,14 @@ public class Lexicon {
 	 * @param w the word to get the score of
 	 * @return the word's score at the current time
 	 */
-	public double getScore(Word w) {
-		return NORMALIZATION ? w.getScore(time)/numTokens : w.getScore(time);
+	public double getScore(Word w, SubSeqCounter counter) {
+		// Smooth sub-minimal scores
+		double score = Math.max(w.getScore(time), getSmoothingMin());
+		
+		// Account for normalization, and then sequence frequency
+		score = NORMALIZATION ? score / numTokens : score;
+		score = counter != null ? score / counter.get(w.units) : score;
+		return score;
 	}
 
 	

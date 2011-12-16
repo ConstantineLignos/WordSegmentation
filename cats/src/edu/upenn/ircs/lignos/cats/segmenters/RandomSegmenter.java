@@ -28,20 +28,22 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 public class RandomSegmenter implements Segmenter {
 	private double threshold = .5;
 	private int segs = 0;
+	private Lexicon lexicon;
 	
 	/**
 	 * Create a 
 	 * @param threshold
 	 */
-	public RandomSegmenter(double threshold) {
+	public RandomSegmenter(double threshold, Lexicon lexicon) {
 		this.threshold = threshold;
+		this.lexicon = lexicon;
 	}
 	
 	/*
 	 * Segment by marking each possible boundary as a boundary
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean trace) {
 		// Return all segmentation points as true
 		Boolean[] boundaries = utterance.getBoundariesCopy();
 		

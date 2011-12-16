@@ -27,13 +27,18 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
  */
 public class LTRUSCSegmenter implements Segmenter {
 	private int uscSegs = 0;
+	private Lexicon lexicon;
 
+	public LTRUSCSegmenter (Lexicon lexicon) {
+		this.lexicon = lexicon;
+	}
+	
 	/* 
 	 * Segment using the Unique Stress Constraint to limit the amount of
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean trace) {
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		Boolean[] segmentation = utterance.getBoundariesCopy();

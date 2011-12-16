@@ -29,12 +29,17 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
  */
 public class UnitSegmenter implements Segmenter {
 	private int segs = 0;
+	private Lexicon lexicon;
+	
+	public UnitSegmenter(Lexicon lexicon) {
+		this.lexicon = lexicon;
+	}
 	
 	/*
 	 * Segment by marking each possible boundary as a boundary
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean trace) {
 		// Return all segmentation points as true
 		Boolean[] boundaries = utterance.getBoundariesCopy();
 		Arrays.fill(boundaries, true);

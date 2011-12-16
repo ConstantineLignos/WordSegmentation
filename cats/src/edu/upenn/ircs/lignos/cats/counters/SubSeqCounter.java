@@ -23,9 +23,21 @@ import java.util.Arrays;
 
 import edu.upenn.ircs.lignos.cats.Utils;
 
-public class SubSeqCounter extends SimpleCounter {
+/**
+ * A counter particularly for sequences of String[] that wraps SimpleCounter. This does not inherit 
+ * from SimpleCounter to prevent accidental use of the underlying SimpleCounter methods, which can 
+ * have disastrous consequences as the object type of the SimpleCounter arguments makes slient type
+ * safety violations easy.
+ */
+public class SubSeqCounter {
 
-	private static final String KEY_DELIM = "\0";
+	private static final String KEY_DELIM = "|";
+	
+	private SimpleCounter counter;
+	
+	public SubSeqCounter() {
+		counter = new SimpleCounter();
+	}
 
 	/**
 	 * Concatenates the specified units into a key string.
@@ -35,13 +47,13 @@ public class SubSeqCounter extends SimpleCounter {
 	private String makeKey(String[] units) {
 		return Utils.join(units, KEY_DELIM);
 	}
-
+	
 	/**
 	 * Increments the count of the specified units as a whole.
 	 * @param units the units to increment the count of
 	 */
 	public void inc(String[] units) {
-		inc(makeKey(units));
+		counter.inc(makeKey(units));
 	}
 
 	/**
@@ -50,7 +62,7 @@ public class SubSeqCounter extends SimpleCounter {
 	 * @return count of those units as a whole
 	 */
 	public int get(String[] units) {
-		return get(makeKey(units));
+		return counter.get(makeKey(units));
 	}
 
 	/**

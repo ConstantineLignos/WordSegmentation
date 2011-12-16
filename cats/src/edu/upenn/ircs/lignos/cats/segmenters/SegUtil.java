@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
 
@@ -122,14 +123,16 @@ public class SegUtil {
 	 * @param words the words to choose from
 	 * @return the most frequent word
 	 */
-	public static Word chooseBestScoreWord(ArrayList<Word> words, Lexicon lex) {
+	public static Word chooseBestScoreWord(ArrayList<Word> words, Lexicon lex, 
+			SubSeqCounter counter) {
 		// Pick the most frequent
 		Word bestWord = null;
 		double bestScore = 0;
 		for (Word word : words) {
-			if (lex.getScore(word) > bestScore) {
+			double score = lex.getScore(word, counter);
+			if (score > bestScore) {
 				bestWord = word;
-				bestScore = lex.getScore(word);
+				bestScore = score;
 			}
 		}
 		return bestWord;
@@ -140,17 +143,18 @@ public class SegUtil {
 	 * @param words the words to choose from
 	 * @return the selected  word
 	 */
-	public static Word chooseSampledBestScoreWord(ArrayList<Word> words, Lexicon lex) {
+	public static Word chooseSampledBestScoreWord(ArrayList<Word> words, Lexicon lex, 
+			SubSeqCounter counter) {
 		// First get the normalization denominator
 		double scoreSum = 0;
 		for (Word w : words) {
-			scoreSum += lex.getScore(w);
+			scoreSum += lex.getScore(w, counter);
 		}
 		
 		// Then normalize
 		double[] normScores = new double[words.size()];
 		for (int i = 0; i < normScores.length; i++) {
-			normScores[i] = lex.getScore(words.get(i)) / scoreSum;
+			normScores[i] = lex.getScore(words.get(i), counter) / scoreSum;
 		}
 		
 		// Bias the scores, normalize again

@@ -29,12 +29,17 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
  */
 public class UtteranceSegmenter implements Segmenter {
 	private int segs = 0;
+	private Lexicon lexicon;
+	
+	public UtteranceSegmenter(Lexicon lexicon) {
+		this.lexicon = lexicon;
+	}
 	
 	/*
 	 * Segment by doing absolutely nothing.
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, Lexicon lexicon, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean trace) {
 		// Return an empty segmentation. We make a new blank array just to play it safe.
 		Boolean[] boundaries = utterance.getBoundariesCopy();
 		Arrays.fill(boundaries, false);
