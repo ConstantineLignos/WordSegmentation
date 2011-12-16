@@ -40,7 +40,11 @@ def load_pron_dict(dict_path):
             continue
         
         # Split the line on double space
-        (word, pron) = line.rstrip().split("  ")
+        try:
+            (word, pron) = line.rstrip().split("  ")
+        except ValueError:
+            print >> sys.stderr, "Unreadable input in dictionary:", repr(line.rstrip())
+            continue
         
         # If the word is an alternate pron, skip it
         if ALT_RE.match(word):
