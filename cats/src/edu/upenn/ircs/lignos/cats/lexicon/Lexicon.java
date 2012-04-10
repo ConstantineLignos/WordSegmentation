@@ -35,9 +35,12 @@ import java.util.Random;
 public class Lexicon {
 	private static final String KEY_DELIM = "|";
 	
+	// TODO: Make these configurable
 	// Amount to penalize
-	// TODO: Make configurable
-	private static final int PENALTY = 1; 
+	private static final double PENALTY = 1.0; 
+	private static final double INIT_SCORE = 1.0; 
+	private static final double UNKNOWN_WORD_SCORE = .5; 
+	private static final double SMOOTHING_MIN = 1.0; 
 	
 	private final boolean stressSensitive;
 	private final boolean trace;
@@ -46,18 +49,22 @@ public class Lexicon {
 	private final boolean NORMALIZATION;
 	// Constant used for probabilistic memory
 	private final double probAmount;
-	// The initial score given to a word, used as a dummy score for potential new words
+	// The initial score given to a word
 	private final double initScore;
+	// The score used as a dummy for unknown words
+	private final double unknownWordScore;
 	// The minimum score a word can have in scoring a hypothesis
 	private final double smoothingMin;
 	// The number of times tick has been called since the creation of the lexicon
 	private long time;
 	// The number of tokens represented by the lexicon
 	// TODO: It's impossible to efficiently sync token count and decay. As every term
-	// gets the same denominator, this should not matter
+	// gets the same denominator, this should not matter for normalization.
 	private long numTokens;
 	// Our random number generator
 	private Random rand;
+	// The subsequence counter
+	private SubSeqCounter counter;
 	
 	private Map<String, Word> lexicon;
 	
@@ -68,17 +75,21 @@ public class Lexicon {
 	 * @param trace whether to output tracing information
 	 */
 	public Lexicon(boolean stressSensitive, boolean trace, boolean useTrust, boolean useProbMem,
-			boolean useNorm, double probAmount, double decayAmount) {
+			boolean useNorm, double probAmount, double decayAmount, SubSeqCounter counter) {
 		this.stressSensitive = stressSensitive;
 		this.trace = trace;
 		this.useTrust = useTrust;
 		this.NORMALIZATION = useNorm;
+		this.counter = counter;
 		
 		// Set up probabilistic memory
 		this.useProbMem = useProbMem;
 		this.probAmount = useProbMem ? probAmount : 0.0;
-		this.initScore = 1.0;
-		this.smoothingMin = 1.0;
+		
+		// Other constants
+		this.initScore = INIT_SCORE;
+		this.smoothingMin = SMOOTHING_MIN;
+		this.unknownWordScore = UNKNOWN_WORD_SCORE;
 		
 		// Set up decay on words
 		if (decayAmount != 0.0) {
@@ -182,7 +193,8 @@ public class Lexicon {
 		if (w == null) {
 			w = new Word(units, stresses, this.initScore, time);
 			lexicon.put(key, w);
-			if (trace) System.out.println("Added " + w + " " + w.getScore(time));
+			if (trace) System.out.println("Added " + w + " " + w.getScore(time) + 
+					(counter != null ? " " + counter.get(w.units) : ""));
 			// All new words start with an initial score, so they don't need
 			// to be incremented like existing words
 		}
@@ -205,7 +217,8 @@ public class Lexicon {
 	 */
 	private void incWord(Word w) {
 		w.increment(time);
-		if (trace) System.out.println("Incremented " + w + " " + w.getScore(time));
+		if (trace) System.out.println("Incremented " + w + " " + w.getScore(time) + 
+				(counter != null ? " " + counter.get(w.units) : ""));
 	}
 	
 	
@@ -252,11 +265,10 @@ public class Lexicon {
 		
 		// Each element of the outer array represents units/stresses for a single word
 		for (int i = 0; i < wordsUnits.length; i++) {
-			// If we're using trust, skip this if it's untrusted
-			if (wordsTrusts != null && !wordsTrusts[i]) {
-				continue;
+			// Reward if no trust info was provided or if trusted  
+			if (wordsTrusts == null || wordsTrusts[i]) {
+				rewardWord(((String[]) wordsUnits[i]), ((Boolean[]) wordsStresses[i]));
 			}
-			rewardWord(((String[]) wordsUnits[i]), ((Boolean[]) wordsStresses[i]));
 		}
 	}
 	
@@ -307,7 +319,7 @@ public class Lexicon {
 	 * @return new word score
 	 */
 	private double getNewWordScore(){
-		return NORMALIZATION ? initScore / numTokens : initScore;
+		return NORMALIZATION ? unknownWordScore / numTokens : unknownWordScore;
 	}
 	
 	/**
@@ -351,7 +363,7 @@ public class Lexicon {
 	public static Lexicon lexiconFromUtterances(Collection<Utterance> utterances, 
 			boolean stressSensitive) {
 		// Make a new lexicon with trace off
-		Lexicon lex = new Lexicon(stressSensitive, false, false, false, false, 0.0, 0.0);
+		Lexicon lex = new Lexicon(stressSensitive, false, false, false, false, 0.0, 0.0, null);
 		// Increment the words in each utterance
 		for (Utterance utt : utterances) {
 			lex.incUtteranceWords(utt.getUnits(), utt.getStresses(), 

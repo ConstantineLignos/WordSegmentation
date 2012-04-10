@@ -89,6 +89,9 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		// Track the maximum beam size
 		int highestBeamSize = 0;
 		
+		// TODO: Small inefficiency in the beam search: it's possible to have two identical
+		// candidates in the beam where one comes from doing no work, and the other comes
+		// from subtracting a single word that's the length of the whole utterance.
 		// Keep segmenting until we're done
 		while (true) {
 			// Loop over the beam, keeping complete segmentations and moving others
@@ -99,8 +102,9 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 				if (beam.size() > highestBeamSize) {
 					highestBeamSize = beam.size();
 				}
-				// Always let complete candidates propagate. 
-				if (currResult.index == utterance.length) {
+				// Always let complete candidates propagate, and also immediately advance
+				// if the utterance is only one unit
+				if (currResult.index == utterance.length || utterance.length == 1) {
 					candidates.add(currResult);
 				}
 				else {
@@ -212,6 +216,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		Boolean[] baseSegmentation = baseResult.segmentation;
 		boolean[] baseTrusts = baseResult.trusts;
 		int baseIndex = baseResult.index;
+		
 		// Additional pairs of segmentations and indices go here
 		LinkedList<SegResult> otherResults = null;
 		
@@ -271,7 +276,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 					
 					if (first && !beamLock && trace && prefixes.size() > 1) 
 						System.out.println("Beam split of size " + prefixes.size());
-					// if (trace) System.out.println("Subtracting " + w + " " + w.getCount());
+					if (trace) System.out.println("Subtracting " + w + " " + lexicon.getScore(w, counter));
 					
 					// Only count the subtraction once
 					if (first) subtractionSegs += 1;
@@ -349,11 +354,16 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			}
 		}
 		
+		// Null out the default result if it's the same as the base
+		if (defaultSeg != null && Arrays.equals(defaultSeg.segmentation, baseResult.segmentation)) {
+			defaultSeg = null;
+		}
+		
 		// If there's just one result, we will have never created otherResults
 		if (otherResults == null) {
 			// Just retain the main result, which will always have been updated,
 			// and the defaultseg if it exists
-			if (defaultSeg != null) {
+			if (defaultSeg != null ) {
 				return new SegResult[] {baseResult, defaultSeg};
 			}
 			else {
@@ -361,7 +371,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			}
 		}
 		else {
-			// Otherwise, build up the results
+			// Otherwise, build up the results			
 			// Keep track of whether to add in the default result
 			int offset = defaultSeg == null ? 1 : 2;
 			

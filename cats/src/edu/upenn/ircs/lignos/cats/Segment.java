@@ -173,12 +173,12 @@ public class Segment {
 		// Build gold lexicon from gold utterances
 		goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances, STRESS_SENSITIVE_LOOKUP);
 		
-		// Create empty segmentation lexicon
-		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
-				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT);
-		
 		// Create empty counter
 		counter = USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
+		
+		// Create empty segmentation lexicon
+		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
+				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
 		
 		System.out.println("Done loading utterances.");
 		
