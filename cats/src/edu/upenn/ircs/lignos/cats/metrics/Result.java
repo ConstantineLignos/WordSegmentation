@@ -43,7 +43,7 @@ public class Result {
 		double fScore = 2 * (precision * recall) / (precision + recall);
 		double hitRate = truePositives / (float) (truePositives + falseNegatives);
 		double faRate = falsePositives / (float) (falsePositives + trueNegatives);
-		double aPrime = .5 * ((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate));
+		double aPrime = .5 + ((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate));
 
 		
 		// Correct for any NaNs by changing to zero
