@@ -29,25 +29,27 @@ PHON_SEP = "."
 
 class CorpusStatistics:
     """Track basic statistics regarding a segmentation corpus."""
-    
+
     def __init__(self, buffersize):
         # Simple counts
-        self.word_counts = defaultdict(int) # Count of words, including stress
-        self.raw_syllable_counts = defaultdict(int) # Count of syllables, including stress
-        self.clean_syllable_counts = defaultdict(int) # Count of syllables without stress
+        self.word_counts = defaultdict(int)  # Count of words, including stress
+        self.raw_syllable_counts = defaultdict(int)  # Count of syllables, including stress
+        self.clean_syllable_counts = defaultdict(int)  # Count of syllables without stress
         self.num_tokens = 0
         self.num_sylls = 0
         self.num_utterances = 0
         self.pri_stresses = defaultdict(int)
         self.any_stresses = defaultdict(int)
-        
+        self.adjacent_stresses = 0
+        self.adjacent_sylls = 0
+
         self.word_isolation_count = defaultdict(int)
         self.word_initial_count = defaultdict(int)
-        self.word_final_count =  defaultdict(int)
+        self.word_final_count = defaultdict(int)
         self.monosyll_utt_count = 0
-        
+
         self.syll_transitions = defaultdict(lambda: defaultdict(int))
-        
+
         # Track lexicon turnover statistics
         self.utt_new_word_counts = []
         self.buffer = {}
@@ -72,7 +74,7 @@ class CorpusStatistics:
 
                     self.word_counts[word] += 1
                     self.num_tokens += 1
-                    
+
                     # Update the rolling buffer, changing behavior based on whether it's full
                     self.buffer[word] = self.num_utterances
                     # Do any turnover required in the buffer
@@ -81,7 +83,7 @@ class CorpusStatistics:
                         oldest, _ = sort_dict_vals(self.buffer)[0]
                         del self.buffer[oldest]
                         n_buffer_turnover += 1
-                    
+
                     # Mark first, last, and isolation words
                     if len(words) == 1:
                         self.word_isolation_count[word] += 1
@@ -89,48 +91,65 @@ class CorpusStatistics:
                         self.word_initial_count[word] += 1
                     elif idx == len(words) - 1:
                         self.word_final_count[word] += 1
-                    
+
                     # Count syllables
-                    sylls = word.split(SYLL_SEP)                    
+                    sylls = word.split(SYLL_SEP)
                     for syll in sylls:
+                        # Count the syllable itself
                         self.raw_syllable_counts[syll] += 1
                         self.clean_syllable_counts[clean_syllable(syll)] += 1
                         self.num_sylls += 1
-                        all_sylls.append(clean_syllable(syll))
-                        
-                # Loop over the syllables to compute transitional probabilities
-                for idx in range(1, len(all_sylls)):
-                    self.syll_transitions[all_sylls[idx - 1]][all_sylls[idx]] += 1
+                        all_sylls.append(syll)
+
+                # Loop over the syllables to compute transitional probabilities and stress
+                # relationships
+                last_stressed = None
+                for idx, syll in enumerate(all_sylls):
+                    # Count adjacent stresses and the total syllable adjacencies
+                    stressed = has_pri_stress(syll)
+                    # Only count adjacent syllables after last_stressed has been explicitly set
+                    if last_stressed is not None:
+                        if stressed and last_stressed:
+                            self.adjacent_stresses += 1
+                        self.adjacent_sylls += 1
+                    last_stressed = stressed
+
+                    # Skip first for TPs
+                    if idx != 1:
+                        syll1, syll2 = (clean_syllable(all_sylls[idx - 1]),
+                                        clean_syllable(all_sylls[idx]))
+                        self.syll_transitions[syll1][syll2] += 1
 
                 # Check utterance syllable number
                 if len(all_sylls) == 1:
                     self.monosyll_utt_count += 1
-                    
+
                 # Count the new words
-                self.utt_new_word_counts.append((self.num_utterances, n_new_words, n_buffer_turnover,
-                                                 len(self.word_counts), self.num_tokens))
+                self.utt_new_word_counts.append((self.num_utterances, n_new_words,
+                                                 n_buffer_turnover, len(self.word_counts),
+                                                 self.num_tokens))
 
         # Normalize the transitional probabilities
         for (context, outcomes) in self.syll_transitions.items():
             total_outcomes = sum(outcomes.values())
             for outcome, count in outcomes.items():
                 self.syll_transitions[context][outcome] = float(count) / total_outcomes
-                        
+
         # Do a pass over types for stress information
         for word in self.word_counts:
             sylls = word.split(SYLL_SEP)
-            
+
             # Skip single syllables
             if len(sylls) == 1:
                 continue
-            
-            # Reduce stresses and count
+
+            # Count stressed syllables and unstressed syllables
             syll_stresses = [has_pri_stress(syll) for syll in sylls]
-            for idx, stressed in enumerate(syll_stresses):      
+            for idx, stressed in enumerate(syll_stresses):
                 if stressed:
                     self.pri_stresses[idx] += 1
                 self.any_stresses[idx] += 1
-                
+
     def dump_corpus(self):
         """Dump statistics about the corpus."""
         print "Utterances:", self.num_utterances
@@ -150,37 +169,38 @@ class CorpusStatistics:
             self.monosyll_utt_count / float(self.num_utterances)
         print "Percent one-word utterances:", \
             sum(self.word_isolation_count.values()) / float(self.num_utterances)
-        
+
+        print "Adjacent stress rate:", self.adjacent_stresses / float(self.adjacent_sylls)
         print "Primary stress rate per syllable position (multisyllabic words):"
         stress_numerators = [count for dummy, count in sorted(self.pri_stresses.items())]
         stress_denomerators = [count for dummy, count in sorted(self.any_stresses.items())]
-        stress_rate = [count1 / float(count2) for count1, count2 in 
+        stress_rate = [count1 / float(count2) for count1, count2 in
                        zip(stress_numerators, stress_denomerators)]
         print stress_rate
-        
+
     def output_features(self, corpus_path, output_base):
         """Output features for each word boundary."""
         out_writer = csv.writer(open(output_base + "_boundaries.csv", 'wb'))
-        out_writer.writerow(("TP", "StressBefore", "StressAfter", "LeftFreq", "RightFreq", 
+        out_writer.writerow(("TP", "StressBefore", "StressAfter", "LeftFreq", "RightFreq",
                              "Boundary"))
         delims = set((SYLL_SEP, WORD_SEP))
-        
+
         # Loop over the input again
         with open(corpus_path, "Ur") as corpus_file:
             for line in corpus_file:
                 line = line.strip()
-                
+
                 splits = re.split(r"([" + SYLL_SEP + WORD_SEP + "])", line)
                 # If there are no splits, move on
                 if not splits:
                     continue
-                
+
                 # Extract information
                 boundaries = [WORD_SEP == delim for delim in splits if delim in delims]
                 sylls = [syll for syll in splits if syll not in delims]
                 clean_sylls = [clean_syllable(syll) for syll in sylls]
                 stresses = [has_pri_stress(syll) for syll in sylls]
-                    
+
                 for idx, boundary in enumerate(boundaries):
                     prev_syll = clean_sylls[idx]
                     next_syll = clean_sylls[idx + 1]
@@ -190,7 +210,7 @@ class CorpusStatistics:
                     trans_prob = self.syll_transitions[prev_syll][next_syll]
                     prev_count = self.clean_syllable_counts[prev_syll]
                     next_count = self.clean_syllable_counts[next_syll]
-                    out_writer.writerow((trans_prob, prev_stress, next_stress, prev_count, 
+                    out_writer.writerow((trans_prob, prev_stress, next_stress, prev_count,
                                          next_count, boundary))
 
     def output_lex_growth(self, output_base):
@@ -203,13 +223,13 @@ class CorpusStatistics:
             out_writer.writerow(row)
 
         out_file.close()
-        
+
     def output_lex(self, output_base):
         """Output lexicon."""
         out_file = open(output_base + "_lex.csv", 'wb')
         out_writer = csv.writer(out_file)
         out_writer.writerow(("rank", "word", "n.tokens", "n.isol", "n.first", "n.last"))
-        
+
         # Sort lexicon by token count
         sorted_word_counts = sort_dict_vals_reverse(self.word_counts)
 
@@ -220,8 +240,8 @@ class CorpusStatistics:
                                  self.word_initial_count[word], self.word_final_count[word]))
 
         out_file.close()
-        
-        
+
+
 def sort_dict_vals_reverse(adict):
     """Sort a dictionary by descending values."""
     return sorted(adict.items(), key=itemgetter(1), reverse=True)
@@ -258,7 +278,7 @@ def main():
     except IndexError:
         print >> sys.stderr, "Usage: corpus_statistics file output_base buffer_size"
         sys.exit(2)
-        
+
     corpstats = CorpusStatistics(buffer_size)
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
@@ -268,4 +288,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
