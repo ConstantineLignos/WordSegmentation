@@ -232,7 +232,7 @@ public class Segment {
 	/**
 	 * Evaluate the segmentation against gold
 	 */
-	private Result eval() {
+	private Result[] eval() {
 		System.out.println("Evaluating...");
 		// TODO Refactor logging
 		PrintStream segLog;
@@ -284,7 +284,7 @@ public class Segment {
 		
 		System.out.println(lexResult);
 		System.out.println("Done evaluating.");
-		return boundaryResult;
+		return new Result[] {boundaryResult, wordResult, lexResult};
 	}
 	
 
@@ -396,7 +396,7 @@ public class Segment {
 		callSegmenter(argv);
 	}
 	
-	public static Result callSegmenter(String[] argv){
+	public static Result[] callSegmenter(String[] argv){
 		if (argv.length == 1) {
 			if (argv[0].equals("--dump-defaults")) {
 				CommentedProperties comProps = defaultProperties();
@@ -427,11 +427,11 @@ public class Segment {
 			seg.segment();
 			segTime = System.currentTimeMillis() - segTime;
 			System.out.println("Segmentation took " + segTime / 1000F + " seconds.");
-			Result evalResult = seg.eval();
+			Result[] evalResults = seg.eval();
 			seg.writeOutput();
 			long endTime = System.currentTimeMillis() - startTime;
 			System.out.println("Run took " + endTime / 1000F + " seconds.");
-			return evalResult;
+			return evalResults;
 		}
 		
 		// If we fell through, print usage
