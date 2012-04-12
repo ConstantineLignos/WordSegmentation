@@ -138,26 +138,43 @@ public class Evaluation {
 				String[] goldWords = wordsPredicted(gold);
 				String[] segWords = wordsPredicted(seg);
 				for (int i = 0; i < goldWords.length; i++) {
+					// True positive: there is actually a word here, and we predicted the right one
 					if (goldWords[i] != null && goldWords[i].equals(segWords[i])) {
 						truePositives++;
 						uttTruePositives++;
 						intTruePositives++;
 					}
+					// True negative: both are null
+					else if (goldWords[i] == null && segWords[i] == null){
+						trueNegatives++;
+						uttTrueNegatives++;
+						intTrueNegatives++;
+					}
 					else {
-						if (goldWords[i] != null && segWords[i] == null) {
-							falseNegatives++;
-							uttFalseNegatives++;
-							intFalseNegatives++;
-						}
-						else if (segWords[i] != null) {
+						// This block records the two error conditions, so the assumption in both
+						// if statements is that we already know we are incorrect.
+						// You'll note that the word metric is peculiar, as the cases
+						// are not mutually exclusive in the fashion you'd expect.
+						// This is because the iteration is over boundaries, so each boundary
+						// can contribute to both a false positive and a false negative in the
+						// case that there is a gold word there that we did not get correct 
+						// (false negative) and we predicted that there is a word there (false
+						// positive). This is the standard definition of this peculiar 
+						// infinite-class classification that is going on here. Think about this 
+						// very hard before you consider changing this logic.
+						
+						// False positive: we wrongly predicted any word here.
+						if (segWords[i] != null) {
 							falsePositives++;
 							uttFalsePositives++;
 							intFalsePositives++;
 						}
-						else {
-							trueNegatives++;
-							uttTrueNegatives++;
-							intTrueNegatives++;
+						
+						// False negative: there is a word here, and we didn't correctly predict it
+						if (goldWords[i] != null) {
+							falseNegatives++;
+							uttFalseNegatives++;
+							intFalseNegatives++;
 						}
 						
 						// Track predicted word errors and log them
