@@ -2,7 +2,6 @@ package edu.upenn.ircs.lignos.cats;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.Formatter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +54,7 @@ public class SegExperiment implements Runnable  {
 	 * @param args Command line arguments
 	 */
 	public static void main(String[] args) {
-		// 
+		// TODO: Read these in from a file
 		String[] propsFiles = {"utterance.props", "unit.props", "default.props", "stress.props", 
 				"reduced.props"};
 		
