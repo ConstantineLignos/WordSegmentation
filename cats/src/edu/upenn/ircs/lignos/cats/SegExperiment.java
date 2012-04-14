@@ -55,8 +55,8 @@ public class SegExperiment implements Runnable  {
 	 */
 	public static void main(String[] args) {
 		// TODO: Read these in from a file
-		String[] propsFiles = {"utterance.props", "unit.props", "default.props", "stress.props", 
-				"reduced.props"};
+		String[] propsFiles = {"utterance.props", "unit.props", "default.props", "reduced.props",
+				"stress.props"};
 		
 		if (args.length != 3) {
 			System.err.println("Usage: SegExperiment input output_base csv_output");
