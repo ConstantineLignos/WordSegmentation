@@ -38,12 +38,12 @@ public class Result {
 	
 	public static Result calcResult(int truePositives, int falsePositives,
 			int falseNegatives, int trueNegatives) {
-		double precision = ((float) truePositives)/(truePositives + falsePositives);
-		double recall = ((float) truePositives)/(truePositives +falseNegatives);
-		double fScore = 2 * (precision * recall) / (precision + recall);
-		double hitRate = truePositives / (float) (truePositives + falseNegatives);
-		double faRate = falsePositives / (float) (falsePositives + trueNegatives);
-		double aPrime = .5 + ((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate));
+		double precision = truePositives / (float) (truePositives + falsePositives);
+		double recall = truePositives / (float) (truePositives + falseNegatives);
+		double fScore = 2 * ((precision * recall) / (precision + recall));
+		double hitRate = recall; // HR and recall are the same measurement
+		double faRate = falsePositives / (float) (trueNegatives + falsePositives);
+		double aPrime = .5 + (((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate)));
 
 		
 		// Correct for any NaNs by changing to zero
