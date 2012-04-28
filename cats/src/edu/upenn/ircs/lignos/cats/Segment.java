@@ -139,10 +139,12 @@ public class Segment {
 		USE_SUBSEQ_DISCOUNT = new Boolean(props.getProperty(SUBSEQDISCOUNT_PROP));
 		
 		// Set up the output path
+		if (USE_TRUST) outputBase += "_trust"; else outputBase += "_notrust";
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
 		if (USE_STRESS && DROP_STRESS) outputBase += "reduced";
 		if (USE_PROB_MEM) outputBase += "_probmem"; else outputBase += "_perfectmem";
-		if (BEAM_SIZE > 1) outputBase += "_beam_" + BEAM_SIZE;
+		outputBase += "_" + SEGMENTER_NAME;
+		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) outputBase += "_" + BEAM_SIZE;
 		
 		return true;
 	}

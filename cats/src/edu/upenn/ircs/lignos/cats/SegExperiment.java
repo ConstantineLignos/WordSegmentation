@@ -55,8 +55,11 @@ public class SegExperiment implements Runnable  {
 	 */
 	public static void main(String[] args) {
 		// TODO: Read these in from a file
-		String[] propsFiles = {"utterance.props", "unit.props", "default.props", "reduced.props",
-				"stress.props"};
+		String[] propsFiles = {"utterance.props", "random.props", "random_oracle.props",
+				"unit.props", "notrust.props", "nobeam.props",  
+				"default.props", "reduced.props", "stress.props", "notrust_probmem.props",
+				"nobeam_probmem.props",
+				"default_probmem.props", "reduced_probmem.props", "stress_probmem.props"};
 		
 		if (args.length != 3) {
 			System.err.println("Usage: SegExperiment input output_base csv_output");
@@ -80,11 +83,13 @@ public class SegExperiment implements Runnable  {
 
 		// Set up place to store the results of each line
 		String[] outLines = new String[propsFiles.length];
+		System.out.println("Number of experiments to run: " + propsFiles.length);
 		
 		// Get the number of cores and start a thread pool
 		int cores = Runtime.getRuntime().availableProcessors();
-		System.out.println("Number of concurrent threads: " + cores);
+		System.out.println("Number of threads: " + cores);
 		ExecutorService pool = Executors.newFixedThreadPool(cores);
+		long startTime = System.currentTimeMillis();
 		
 		// Index to store each result
 		int idx = 0;
@@ -106,7 +111,9 @@ public class SegExperiment implements Runnable  {
 		}
 		finally {
 			out.close();
-		}		
+		}
+		long endTime = System.currentTimeMillis() - startTime;
+		System.out.println("Experiments took " + endTime / 1000F + " seconds.");
 	}
 
 }

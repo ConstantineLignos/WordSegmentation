@@ -65,7 +65,7 @@ public class Evaluation {
 		// Write interval header
 		if (log != null) {
 			switch (method) {
-			case BOUNDARIES: log.println("Interval,Precision,Recall,Fscore"); break;
+			case BOUNDARIES: log.println("Interval,Precision,Recall,F1,HR,FAR,Aprime"); break;
 			case WORDS: log.println("Utt,Error,Type"); break;
 			}
 		}

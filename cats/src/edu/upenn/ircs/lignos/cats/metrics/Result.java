@@ -50,7 +50,7 @@ public class Result {
 		precision = Double.isNaN(precision) ? 0.0 : precision;
 		recall = Double.isNaN(recall) ? 0.0 : recall;
 		fScore = Double.isNaN(fScore) ? 0.0 : fScore;
-		aPrime = Double.isNaN(aPrime) ? 0.0 : aPrime;
+		aPrime = Double.isNaN(aPrime) || Double.isInfinite(aPrime) ? 0.0 : aPrime;
 		
 		Result r = new Result(precision, recall, fScore, hitRate, faRate, aPrime);
 		return r;
@@ -62,6 +62,7 @@ public class Result {
 	}
 	
 	public String toCSVString() {
-		return String.format("%4f,%4f,%4f", precision, recall, fScore);
+		return String.format("%4f,%4f,%4f,%4f,%4f,%4f", precision, recall, fScore, hitRate, faRate,
+				aPrime);
 	}
 }
