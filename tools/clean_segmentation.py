@@ -21,8 +21,8 @@ import re
 
 from lexinfo.arpabet import convert_twochar_phoneseq
 
-
-STRESS_RE = re.compile(r'\(\d\)')
+# Stress will either appear as a bare digit or in parens
+STRESS_RE = re.compile(r'\(*\d\)*')
 SYLL_SEP = '|'
 PHONE_SEP = '.'
 
