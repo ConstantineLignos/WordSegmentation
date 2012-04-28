@@ -273,17 +273,22 @@ def main():
     """Process a file and dump its statistics."""
     try:
         corpus_path = sys.argv[1]
-        output_base = sys.argv[2]
-        buffer_size = int(sys.argv[3])
-    except IndexError:
-        print >> sys.stderr, "Usage: corpus_statistics file output_base buffer_size"
+        if len(sys.argv) > 2:
+            output_base = sys.argv[2]
+            buffer_size = int(sys.argv[3])
+        else:
+            output_base = None
+            buffer_size = sys.maxint
+    except (IndexError, ValueError):
+        print >> sys.stderr, "Usage: corpus_statistics file [output_base buffer_size]"
         sys.exit(2)
 
     corpstats = CorpusStatistics(buffer_size)
     corpstats.load_corpus(corpus_path)
     corpstats.dump_corpus()
-    corpstats.output_lex_growth(output_base)
-    corpstats.output_lex(output_base)
+    if output_base:
+        corpstats.output_lex_growth(output_base)
+        corpstats.output_lex(output_base)
 
 
 if __name__ == "__main__":
