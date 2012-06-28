@@ -206,7 +206,7 @@ public class Evaluation {
 					Result r = Result.calcResult(intTruePositives, intFalsePositives, 
 							intFalseNegatives, intTrueNegatives);
 					log.println(nUtts + "," + r.toCSVString());
-					intTruePositives = intFalseNegatives = intFalsePositives = 0;
+					intTruePositives = intFalseNegatives = intFalsePositives = intTrueNegatives = 0;
 					nIntervalUtts = 0;
 				}
 			}
