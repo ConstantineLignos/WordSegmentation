@@ -20,6 +20,8 @@ Constantine Lignos, February 2013
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from itertools import chain
+
 
 class Corpus(object):
     """Corpus of utterances."""
@@ -32,7 +34,8 @@ class Corpus(object):
 
         """
         with open(path, 'rU') as infile:
-            self._utterances = [_parse_line(line) for line in infile]
+            self._utterances = [self._parse_line(line) for line in infile]
+        self._boundaries = [self._parse_boundaries(utt) for utt in self._utterances]
 
     @property
     def seg_utterances(self):
@@ -42,9 +45,48 @@ class Corpus(object):
     @property
     def unseg_utterances(self):
         """Unsegmented utterances, each a string of units."""
-        return (''.join(words) for words in self._utterances)
+        return (list(chain(*utt)) for utt in self._utterances)
+
+    @staticmethod
+    def _parse_line(line):
+        """Return a list of words in the line, each word a list of units.
+
+        >>> Corpus._parse_line('yu want tu si D6 bUk\\n')
+        [['y', 'u'], ['w', 'a', 'n', 't'], ['t', 'u'], ['s', 'i'], ['D', '6'], ['b', 'U', 'k']]
+        >>> Corpus._parse_line('lUk\\n')
+        [['l', 'U', 'k']]
+
+        """
+        return [[char for char in word] for word in line.rstrip().split(" ")]
+
+    @staticmethod
+    def _parse_boundaries(utt):
+        """Return which transitions are boundaries.
+
+        >>> Corpus._parse_boundaries([['h', '&', 'v'], ['6'], ['d', 'r', 'I', 'N', 'k']])
+        [False, False, True, True, False, False, False, False]
+        >>> Corpus._parse_boundaries([['y', 'E', 's']])
+        [False, False]
+        >>> Corpus._parse_boundaries([['6'], ['6'], ['6']])
+        [True, True]
+        >>> Corpus._parse_boundaries([['6']])
+        []
+
+        """
+        boundaries = []
+        first = True
+        for word in utt:
+            # Transition between words gets a boundary, but start of utterance does not
+            if not first:
+                boundaries.append(True)
+            first = False
+
+            # Add a false for each intra-word transition
+            boundaries.extend([False] * (len(word) - 1))
+
+        return boundaries
 
 
-def _parse_line(line):
-    """Parse a line into words."""
-    return " ".split(line.rstrip())
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

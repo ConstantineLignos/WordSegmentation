@@ -20,5 +20,8 @@ Cognitive Science, 35(1), 119-155.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-class DiBSSegmenter(object):
+from segeval.models.diphone import DiphoneSegmenter
+
+
+class DiBSSegmenter(DiphoneSegmenter):
     pass

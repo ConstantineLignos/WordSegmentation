@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Tools for evaluating word segmenters.
 
@@ -20,14 +21,35 @@ Constantine Lignos, February 2013
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import argparse
 
-from corpus import Corpus
+from segeval.corpus import Corpus
 from segeval.models.diphone import DiphoneSegmenter
 
 
+SUPERVISED_DIPHONE = "supdiphone"
+METHODS = (SUPERVISED_DIPHONE,)
+
+
+def evaluate(method, train_path, test_path):
+    """Evaluate a word segmentation strategy."""
+    train_corpus = Corpus(train_path)
+    if test_path:
+        test_corpus = Corpus(test_path)
+
+    for utt in train_corpus.seg_utterances:
+        print utt
+
+
 def main():
-    """Evaluate a segmentation."""
-    # TODO: Right now this is just plugged in to the diphone segmenter
+    """Evaluate strategies for word segmentation."""
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument('method', choices=METHODS, help='Method to evaluate')
+    parser.add_argument('train', help='Training corpus')
+    parser.add_argument('--test', help='Testing corpus', default=None)
+    args = parser.parse_args()
+    evaluate(args.method, args.train, args.test)
+
 
 if __name__ == "__main__":
     main()

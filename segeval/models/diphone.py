@@ -18,15 +18,28 @@ A simple supervised diphone segmenter.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from segeval.pyclassifiers.stump import Stump
+
+
 class DiphoneSegmenter(object):
     """A supervised diphone segmenter."""
 
     def __init__(self):
         # Learned decision stump threshold
         self.threshold = None
-        
-    def train_supervised(self, utterances):
-        """Train on segmented utterances."""
-        # Compute all diphone values
 
-        #
+    def train(self, corpus):
+        """Train on segmented utterances."""
+        # TODO: Implement
+
+    @staticmethod
+    def _corpus_diphone_labels(corpus):
+        """Return the diphones from a corpus as features and outcome."""
+        # TODO: Implement
+        pass
+
+    @staticmethod
+    def _utterance_diphone_labels(utt, boundaries):
+        """Return the diphones contained in an utterance."""
+        # TODO: Implement
+        pass
