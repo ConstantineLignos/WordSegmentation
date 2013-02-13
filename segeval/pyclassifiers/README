@@ -1,0 +1,4 @@
+All code in this folder is by Kyle Gorman, from:
+https://github.com/kylebgorman/pyclassifiers/blob/master/logistic_regression.py
+
+The files are placed here to avoid the complications of setting up a submodule.
