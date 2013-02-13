@@ -3,8 +3,12 @@
 *.swp
 *.pyc
 *.class
+*.project
+*.pydevproject
 
 cats/out
 cats/build
 cats/bin
 cats/cats.jar
+
+data/brent_ratner*
