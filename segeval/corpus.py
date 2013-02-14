@@ -21,6 +21,7 @@ Constantine Lignos, February 2013
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from itertools import chain
+from collections import Counter
 
 
 class Corpus(object):
@@ -36,6 +37,8 @@ class Corpus(object):
         with open(path, 'rU') as infile:
             self._utterances = [self._parse_line(line) for line in infile]
         self._boundaries = [self._parse_boundaries(utt) for utt in self._utterances]
+        self._word_counts = None
+        self._diphone_counts = None
 
     @property
     def seg_utterances(self):
@@ -47,29 +50,73 @@ class Corpus(object):
         """Unsegmented utterances, each a string of units."""
         return (list(chain(*utt)) for utt in self._utterances)
 
+    @property
+    def word_counts(self):
+        """Counter of all word types in the corpus.
+
+        >>> c = Corpus('data/test-corpus.txt')
+        >>> sorted(c.word_counts.items()) # doctest: +NORMALIZE_WHITESPACE
+        [(('&', 'n', 'd'), 1), (('6',), 2), (('W', 'A', 't'), 1),
+         (('d', 'O', 'g', 'i'), 2), (('n', '9', 's'), 1)]
+
+        """
+        if not self._word_counts:
+            self._count_words()
+        return self._word_counts
+
+    @property
+    def diphone_counts(self):
+        """Counter of all diphones in the corpus.
+
+        >>> c = Corpus('data/test-corpus.txt')
+        >>> sorted(c.diphone_counts.items()) # doctest: +NORMALIZE_WHITESPACE
+        [(('&', 'n'), 1), (('6', 'd'), 1), (('6', 'n'), 1), (('9', 's'), 1),
+         (('A', 't'), 1), (('O', 'g'), 2), (('W', 'A'), 1), (('d', '6'), 1),
+         (('d', 'O'), 2), (('g', 'i'), 2), (('n', '9'), 1), (('n', 'd'), 1),
+         (('s', 'd'), 1), (('t', '6'), 1)]
+
+        """
+        if not self._diphone_counts:
+            self._count_diphones()
+        return self._diphone_counts
+
+    @property
+    def diphone_boundaries(self):
+        """Tuples of each diphone token and whether it is a boundary."""
+        pass
+
+    def _count_words(self):
+        """Count the words in the corpus."""
+        self._word_counts = Counter(word for utt in self._utterances for word in utt)
+
+    def _count_diphones(self):
+        """Count the diphones in the corpus."""
+        self._diphone_counts = \
+            Counter(chain.from_iterable(self._extract_diphones(utt) for utt in self._utterances))
+
     @staticmethod
     def _parse_line(line):
         """Return a list of words in the line, each word a list of units.
 
         >>> Corpus._parse_line('yu want tu si D6 bUk\\n')
-        [['y', 'u'], ['w', 'a', 'n', 't'], ['t', 'u'], ['s', 'i'], ['D', '6'], ['b', 'U', 'k']]
+        [('y', 'u'), ('w', 'a', 'n', 't'), ('t', 'u'), ('s', 'i'), ('D', '6'), ('b', 'U', 'k')]
         >>> Corpus._parse_line('lUk\\n')
-        [['l', 'U', 'k']]
+        [('l', 'U', 'k')]
 
         """
-        return [[char for char in word] for word in line.rstrip().split(" ")]
+        return [tuple(word) for word in line.rstrip().split(" ")]
 
     @staticmethod
     def _parse_boundaries(utt):
         """Return which transitions are boundaries.
 
-        >>> Corpus._parse_boundaries([['h', '&', 'v'], ['6'], ['d', 'r', 'I', 'N', 'k']])
+        >>> Corpus._parse_boundaries([('h', '&', 'v'), ('6',), ('d', 'r', 'I', 'N', 'k')])
         [False, False, True, True, False, False, False, False]
-        >>> Corpus._parse_boundaries([['y', 'E', 's']])
+        >>> Corpus._parse_boundaries([('y', 'E', 's')])
         [False, False]
-        >>> Corpus._parse_boundaries([['6'], ['6'], ['6']])
+        >>> Corpus._parse_boundaries([('6',), ('6',), ('6',)])
         [True, True]
-        >>> Corpus._parse_boundaries([['6']])
+        >>> Corpus._parse_boundaries([('6',)])
         []
 
         """
@@ -85,6 +132,44 @@ class Corpus(object):
             boundaries.extend([False] * (len(word) - 1))
 
         return boundaries
+
+    @staticmethod
+    def _extract_diphones(utt):
+        """Return the diphones in a utterance, treating it as unsegmented.
+
+        >>> Corpus._extract_diphones([('h', '&', 'v'), ('6',),
+        ... ('d', 'r', 'I', 'N', 'k')]) # doctest: +NORMALIZE_WHITESPACE
+        [('h', '&'), ('&', 'v'), ('v', '6'), ('6', 'd'), ('d', 'r'),
+         ('r', 'I'), ('I', 'N'), ('N', 'k')]
+        >>> Corpus._extract_diphones([('y', 'E', 's')])
+        [('y', 'E'), ('E', 's')]
+        >>> Corpus._extract_diphones([('6',), ('6',), ('6',)])
+        [('6', '6'), ('6', '6')]
+        >>> Corpus._extract_diphones([('6',)])
+        []
+
+        """
+        phones = list(chain(*utt))
+        return zip(phones[:-1], phones[1:])
+
+    @staticmethod
+    def _extract_diphone_boundaries(utt):
+        """Return the diphones in an utterance and whether they were boundaries.
+
+        >>> Corpus._extract_diphone_boundaries([('h', '&', 'v'),
+        ... ('6',), ('d', 'r', 'I', 'N', 'k')]) # doctest: +NORMALIZE_WHITESPACE
+        [(('h', '&'), False), (('&', 'v'), False), (('v', '6'), True), (('6', 'd'), True),
+         (('d', 'r'), False), (('r', 'I'), False), (('I', 'N'), False), (('N', 'k'), False)]
+
+        >>> Corpus._extract_diphone_boundaries([('y', 'E', 's')])
+        [(('y', 'E'), False), (('E', 's'), False)]
+        >>> Corpus._extract_diphone_boundaries([('6',), ('6',), ('6',)])
+        [(('6', '6'), True), (('6', '6'), True)]
+        >>> Corpus._extract_diphone_boundaries([('6',)])
+        []
+
+        """
+        return zip(Corpus._extract_diphones(utt), Corpus._parse_boundaries(utt))
 
 
 if __name__ == "__main__":
