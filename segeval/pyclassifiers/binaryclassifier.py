@@ -39,11 +39,12 @@ class BinaryClassifier(object):
 
     def __init__(self, X, Y, hit, **kwargs):
         self.hit = hit
+        self.miss = None
         for y in Y: # figure out what the "miss" is called
             if y != hit:
                 self.miss = y
                 break
-        if not self.miss:
+        if self.miss is None:
             raise ValueError('Outcomes are invariant')
         self.train(X, Y, **kwargs)
 
