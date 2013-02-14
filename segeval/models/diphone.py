@@ -18,6 +18,9 @@ A simple supervised diphone segmenter.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from itertools import chain
+
+from segeval.util import counter_freqs
 from segeval.pyclassifiers.stump import Stump
 
 
@@ -30,16 +33,26 @@ class DiphoneSegmenter(object):
 
     def train(self, corpus):
         """Train on segmented utterances."""
-        # TODO: Implement
+        # Get the boundaries and lables
+        diphone_boundaries = chain.from_iterable(corpus.diphone_boundaries)
+        diphones, diphone_labels = zip(*diphone_boundaries)
 
-    @staticmethod
-    def _corpus_diphone_labels(corpus):
-        """Return the diphones from a corpus as features and outcome."""
-        # TODO: Implement
-        pass
+        # Convert counts to probabilities
+        diphone_freq = counter_freqs(corpus.diphone_counts)
 
-    @staticmethod
-    def _utterance_diphone_labels(utt, boundaries):
-        """Return the diphones contained in an utterance."""
-        # TODO: Implement
-        pass
+        # Pack the diphone features in the format for the classifier
+        diphone_features = [[diphone_freq[diphone]] for diphone in diphones]
+        print diphone_features[:10]
+        print diphone_labels[:10]
+
+        # Train!
+        stump = Stump(diphone_features, diphone_labels, True)
+        print "Learned threshold:"
+        print stump
+
+        print "Training performance:"
+        stump.evaluate(diphone_features, diphone_labels)
+        print "Accuracy:", stump.accuracy()
+        print "Precision:", stump.precision()
+        print "Recall:", stump.recall()
+        print "F1:", stump.F1()

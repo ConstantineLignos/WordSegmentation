@@ -37,9 +37,13 @@ def evaluate(method, train_path, test_path):
     if test_path:
         test_corpus = Corpus(test_path)
 
-    for utt in train_corpus.seg_utterances:
-        print utt
+    print "Training..."
+    if method == SUPERVISED_DIPHONE:
+        seg = DiphoneSegmenter()
+        seg.train(train_corpus)
 
+    print "Evaluating..."
+    # TODO: Evaluate
 
 def main():
     """Evaluate strategies for word segmentation."""

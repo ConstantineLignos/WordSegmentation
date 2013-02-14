@@ -39,6 +39,7 @@ class Corpus(object):
         self._boundaries = [self._parse_boundaries(utt) for utt in self._utterances]
         self._word_counts = None
         self._diphone_counts = None
+        self._diphone_boundaries = None
 
     @property
     def seg_utterances(self):
@@ -61,7 +62,7 @@ class Corpus(object):
 
         """
         if not self._word_counts:
-            self._count_words()
+            self._word_counts = Counter(word for utt in self._utterances for word in utt)
         return self._word_counts
 
     @property
@@ -77,22 +78,18 @@ class Corpus(object):
 
         """
         if not self._diphone_counts:
-            self._count_diphones()
+            self._diphone_counts = \
+                Counter(chain.from_iterable(self._extract_diphones(utt)
+                                            for utt in self._utterances))
         return self._diphone_counts
 
     @property
     def diphone_boundaries(self):
         """Tuples of each diphone token and whether it is a boundary."""
-        pass
-
-    def _count_words(self):
-        """Count the words in the corpus."""
-        self._word_counts = Counter(word for utt in self._utterances for word in utt)
-
-    def _count_diphones(self):
-        """Count the diphones in the corpus."""
-        self._diphone_counts = \
-            Counter(chain.from_iterable(self._extract_diphones(utt) for utt in self._utterances))
+        if not self._diphone_boundaries:
+            self._diphone_boundaries = \
+                [self._extract_diphone_boundaries(utt) for utt in self._utterances]
+        return self._diphone_boundaries
 
     @staticmethod
     def _parse_line(line):
