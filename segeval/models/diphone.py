@@ -42,11 +42,9 @@ class DiphoneSegmenter(object):
 
         # Pack the diphone features in the format for the classifier
         diphone_features = [[diphone_freq[diphone]] for diphone in diphones]
-        print diphone_features[:10]
-        print diphone_labels[:10]
 
         # Train!
-        stump = Stump(diphone_features, diphone_labels, True)
+        stump = Stump(diphone_features, diphone_labels, False)
         print "Learned threshold:"
         print stump
 
