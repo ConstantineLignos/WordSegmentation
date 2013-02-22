@@ -11,15 +11,15 @@ scale_x_log2 <- scale_x_continuous(trans = log2_trans(), breaks = trans_breaks('
 
 # Load data
 diphones <- read.csv('../data/br_diphones.csv')
+diphones$Boundary <- factor(diphones$Boundary, levels = c(TRUE, FALSE), labels = c("Word Boundary", "Word Internal"))
 
 # Plot the distributions of each class
-# First, get an average boundary value for each diphone
-diphones$Boundary.Numeric <- as.numeric(diphones$Boundary)
-
 ggplot(diphones, aes(Boundary, Prob)) + geom_boxplot(outlier.size = 0) + theme_bw()
 ggplot(diphones, aes(Boundary, Prob)) + geom_violin(fill = "grey90") + theme_bw() + coord_flip()
 # TODO: Overplot a few diphones of interest
-ggplot(diphones, aes(Prob)) + geom_density(aes(fill = Boundary), alpha = 0.7) + scale_fill_grey() + scale_x_log2 + theme_bw()
+pdf(file="diphone_boundary_density.pdf")
+ggplot(diphones, aes(Prob)) + geom_density(aes(fill = Boundary), alpha = 0.75) + scale_fill_grey() + scale_x_log2 + xlab("Diphone Probability") + ylab("Density") + theme_bw() + theme(legend.position = "bottom")
+dev.off()
 
 # First, check out the test set so we can come up with a baseline
 summary(diphones)
@@ -60,4 +60,17 @@ diphone.boundaryprobs <- ddply(diphones, .(Diphone), summarise, mean.boundary = 
 # Merge it all together
 diphone.all <- merge(diphone.counts, diphone.boundaryprobs, by = "Diphone")
 # Plots
-ggplot(diphone.all, aes(log(freq), mean.boundary, label = Diphone)) + stat_smooth()  + geom_point() + theme_bw()
+# Boundary probability by frequency
+pdf(file="diphone_boundary_frequency.pdf")
+ggplot(diphone.all, aes(log(freq), mean.boundary, label = Diphone)) + stat_smooth(method = "loess")  + geom_point() + xlab("Log Diphone Frequency") + ylab("Word Boundary Probability") + theme_bw()
+dev.off()
+
+# Are diphones Zipfian?
+# Separate by tendency
+diphone.all$Tendency <- factor(diphone.all$mean.boundary > .5, levels = c(TRUE, FALSE), labels = c("Word Boundary", "Word Internal"))
+pdf(file="diphone_zipf_facet.pdf")
+ggplot(diphone.all, aes(log(Rank), log(freq))) + geom_point() + scale_size(range = c(4, 8), guide = "none") + xlab("Log Diphone Rank") + ylab("Log Diphone Frequency") + facet_grid(. ~ Tendency) + coord_fixed() + theme_bw()
+dev.off()
+pdf(file="diphone_zipf.pdf")
+ggplot(diphone.all, aes(log(Rank), log(freq))) + geom_point() + scale_size(range = c(4, 8), guide = "none") + xlab("Log Diphone Rank") + ylab("Log Diphone Frequency") + theme_bw()
+dev.off()
