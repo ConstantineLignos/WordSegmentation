@@ -38,6 +38,7 @@ class Corpus(object):
             self._utterances = [self._parse_line(line) for line in infile]
         self._boundaries = [self._parse_boundaries(utt) for utt in self._utterances]
         self._word_counts = None
+        self._phoneme_counts = None
         self._diphone_counts = None
         self._diphone_boundaries = None
 
@@ -82,6 +83,22 @@ class Corpus(object):
                 Counter(chain.from_iterable(self._extract_diphones(utt)
                                             for utt in self._utterances))
         return self._diphone_counts
+
+    @property
+    def phoneme_counts(self):
+        """Counter of all phonemes in the corpus.
+
+        >>> c = Corpus('data/test-corpus.txt')
+        >>> sorted(c.phoneme_counts.items()) # doctest: +NORMALIZE_WHITESPACE
+        [('&', 1), ('6', 2), ('9', 1), ('A', 1), ('O', 2), ('W', 1), ('d', 3),
+        ('g', 2), ('i', 2), ('n', 2), ('s', 1), ('t', 1)]
+
+        """
+        if not self._phoneme_counts:
+            self._phoneme_counts = \
+                Counter(chain.from_iterable(chain(*utt) for utt in self._utterances))
+
+        return self._phoneme_counts
 
     @property
     def diphone_boundaries(self):

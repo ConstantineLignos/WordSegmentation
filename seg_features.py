@@ -24,13 +24,15 @@ Constantine Lignos, February 2013
 import argparse
 from itertools import chain
 import csv
+from operator import itemgetter
 
 from segeval.corpus import Corpus
 from segeval.util import counter_freqs
 
 
+PHONEMES = "phonemes"
 DIPHONES = "diphones"
-FEATURES = (DIPHONES,)
+FEATURES = (DIPHONES, PHONEMES)
 BOUNDARY_HEADER = 'Boundary'
 
 
@@ -53,6 +55,20 @@ def diphone_features(corpus, out_csv):
         out_csv.writerow((''.join(diphone), diphone_freq[diphone], convert_r_bool(label)))
 
 
+def phoneme_counts(corpus, out_csv):
+    """Write phoneme counts to a CSV."""
+    # Convert counts to probabilities
+    phoneme_freq = counter_freqs(corpus.phoneme_counts)
+
+    # Write header
+    out_csv.writerow(('Phoneme', 'Prob', 'Rank'))
+
+    # Write data
+    for idx, (phoneme, count) in enumerate(sorted(phoneme_freq.items(),
+                                                  key=itemgetter(1), reverse=True)):
+        out_csv.writerow((phoneme, count, idx + 1))
+
+
 def extract(features, in_path, out_path):
     """Evaluate a word segmentation strategy."""
     print "Loading corpus..."
@@ -61,7 +77,8 @@ def extract(features, in_path, out_path):
 
     print "Extracting features..."
     feature_handlers = {
-     DIPHONES: diphone_features,
+        DIPHONES: diphone_features,
+        PHONEMES: phoneme_counts,
     }
     feature_handlers[features](corpus, out_csv)
 

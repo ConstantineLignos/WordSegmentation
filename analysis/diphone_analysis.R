@@ -1,6 +1,7 @@
 library(boot)
 library(caTools)
 library(pROC)
+library(plyr)
 library(ggplot2)
 library(scales)
 
@@ -42,3 +43,21 @@ accuracy(trainlabels, stump.preds)
 
 # ROC analysis
 stump.roc <- roc(trainlabels, trainfeatures$Prob, plot = TRUE)
+
+# Logistic regression
+m1 <- glm(Boundary ~ Prob, diphones, family = "binomial")
+drop1(m1, test = "Chisq")
+
+### Diphone distributions
+# Counts
+diphone.counts <- count(diphones, "Diphone")
+diphone.counts$Rank <- rank(-diphone.counts$freq)
+# Proportion not a word boundary
+diphone.boundaryprobs <- ddply(diphones, .(Diphone), summarise, mean.boundary = mean(Boundary))
+# This switches from p(is boundary) to p(is not word boundary), as the latter
+# should correlate with frequency
+#diphone.boundaryprobs$mean.boundary <- 1 - diphone.boundaryprobs$mean.boundary
+# Merge it all together
+diphone.all <- merge(diphone.counts, diphone.boundaryprobs, by = "Diphone")
+# Plots
+ggplot(diphone.all, aes(log(freq), mean.boundary, label = Diphone)) + stat_smooth()  + geom_point() + theme_bw()
