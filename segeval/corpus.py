@@ -36,7 +36,8 @@ class Corpus(object):
         """
         with open(path, 'rU') as infile:
             self._utterances = [self._parse_line(line) for line in infile]
-        self._boundaries = [self._parse_boundaries(utt) for utt in self._utterances]
+        self._boundaries = [self._parse_boundaries(utt)
+                            for utt in self._utterances]
         self._word_counts = None
         self._phoneme_counts = None
         self._diphone_counts = None
@@ -63,7 +64,8 @@ class Corpus(object):
 
         """
         if not self._word_counts:
-            self._word_counts = Counter(word for utt in self._utterances for word in utt)
+            self._word_counts = Counter(word for utt in self._utterances
+                                        for word in utt)
         return self._word_counts
 
     @property
@@ -96,7 +98,8 @@ class Corpus(object):
         """
         if not self._phoneme_counts:
             self._phoneme_counts = \
-                Counter(chain.from_iterable(chain(*utt) for utt in self._utterances))
+                Counter(chain.from_iterable(chain(*utt)
+                                            for utt in self._utterances))
 
         return self._phoneme_counts
 
@@ -118,7 +121,7 @@ class Corpus(object):
             first, last = self._extract_outside_phonemes(utt)
             initial[first] += 1
             final[last] += 1
-        
+
         return (initial, final)
 
     @staticmethod
@@ -137,7 +140,8 @@ class Corpus(object):
     def _parse_boundaries(utt):
         """Return which transitions are boundaries.
 
-        >>> Corpus._parse_boundaries([('h', '&', 'v'), ('6',), ('d', 'r', 'I', 'N', 'k')])
+        >>> Corpus._parse_boundaries([('h', '&', 'v'),
+        ... ('6',), ('d', 'r', 'I', 'N', 'k')])
         [False, False, True, True, False, False, False, False]
         >>> Corpus._parse_boundaries([('y', 'E', 's')])
         [False, False]
@@ -150,7 +154,8 @@ class Corpus(object):
         boundaries = []
         first = True
         for word in utt:
-            # Transition between words gets a boundary, but start of utterance does not
+            # Transition between words gets a boundary, but start of
+            # utterance does not
             if not first:
                 boundaries.append(True)
             first = False
