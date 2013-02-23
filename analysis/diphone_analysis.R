@@ -67,7 +67,7 @@ dev.off()
 
 # Are diphones Zipfian?
 # Separate by tendency
-diphone.all$Tendency <- factor(diphone.all$mean.boundary > .5, levels = c(TRUE, FALSE), labels = c("Word Boundary", "Word Internal"))
+diphone.all$Tendency <- factor(diphone.all$mean.boundary > .5, levels = c(TRUE, FALSE), labels = c("Word Boundary Dominant", "Word Internal Dominant"))
 pdf(file="diphone_zipf_facet.pdf")
 ggplot(diphone.all, aes(log(Rank), log(freq))) + geom_point() + scale_size(range = c(4, 8), guide = "none") + xlab("Log Diphone Rank") + ylab("Log Diphone Frequency") + facet_grid(. ~ Tendency) + coord_fixed() + theme_bw()
 dev.off()
