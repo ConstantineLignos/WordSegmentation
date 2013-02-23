@@ -81,7 +81,7 @@ def dibs_features(corpus, out_csv):
     initial_counts, final_counts = corpus.outside_phoneme_counts
 
     # Output information for each boundary
-    out_csv.writerow(('Diphone', 'Score', BOUNDARY_HEADER))
+    out_csv.writerow(('Diphone', 'Prob', 'Score', BOUNDARY_HEADER))
     diphone_boundaries = chain.from_iterable(corpus.diphone_boundaries)
     for diphone, label in diphone_boundaries:
         # Estimate P(%|x) and P(y|%) for a diphone xy
@@ -101,7 +101,11 @@ def dibs_features(corpus, out_csv):
         # Compute the DiBS score
         assert 1.0 >= diphone_freq[diphone] >= 0.0
         dibs_score = 2.0 *  p_phone1_final * p_phone2_init / diphone_freq[diphone]
-        out_csv.writerow((''.join(diphone), dibs_score, convert_r_bool(label)))
+        # Compute an estimated P(#|xy) assuming P(#) = .28, the mean
+        # value explored in their study
+        boundary_prob =  p_phone1_final * p_phone2_init * 0.28 / diphone_freq[diphone]
+
+        out_csv.writerow((''.join(diphone), boundary_prob, dibs_score, convert_r_bool(label)))
 
 
 def extract(features, in_path, out_path):
