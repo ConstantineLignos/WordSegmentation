@@ -21,6 +21,7 @@ Constantine Lignos, February 2013
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import division
 import argparse
 from itertools import chain
 import csv
@@ -32,7 +33,8 @@ from segeval.util import counter_freqs
 
 PHONEMES = "phonemes"
 DIPHONES = "diphones"
-FEATURES = (DIPHONES, PHONEMES)
+DIBS = "dibs"
+FEATURES = (DIPHONES, PHONEMES, DIBS)
 BOUNDARY_HEADER = 'Boundary'
 
 
@@ -55,7 +57,7 @@ def diphone_features(corpus, out_csv):
         out_csv.writerow((''.join(diphone), diphone_freq[diphone], convert_r_bool(label)))
 
 
-def phoneme_counts(corpus, out_csv):
+def phoneme_features(corpus, out_csv):
     """Write phoneme counts to a CSV."""
     # Convert counts to probabilities
     phoneme_freq = counter_freqs(corpus.phoneme_counts)
@@ -69,6 +71,39 @@ def phoneme_counts(corpus, out_csv):
         out_csv.writerow((phoneme, count, idx + 1))
 
 
+def dibs_features(corpus, out_csv):
+    """Write information for the DiBs segmentation model to a CSV."""
+    # Get diphone and phoneme counts 
+    phoneme_counts = corpus.phoneme_counts
+    diphone_freq = counter_freqs(corpus.diphone_counts)
+
+    # Get phrase initial/final counts
+    initial_counts, final_counts = corpus.outside_phoneme_counts
+
+    # Output information for each boundary
+    out_csv.writerow(('Diphone', 'Score', BOUNDARY_HEADER))
+    diphone_boundaries = chain.from_iterable(corpus.diphone_boundaries)
+    for diphone, label in diphone_boundaries:
+        # Estimate P(%|x) and P(y|%) for a diphone xy
+        phone1, phone2 = diphone
+        try:
+            p_phone1_final = final_counts[phone1] / phoneme_counts[phone1]
+            assert 1.0 >= p_phone1_final >= 0.0
+        except KeyError:
+            p_phone1_final = 0.0
+
+        try:
+            p_phone2_init = initial_counts[phone2] / phoneme_counts[phone2]
+            assert 1.0 >= p_phone2_init >= 0.0
+        except KeyError:
+            p_phone2_init = 0.0
+        
+        # Compute the DiBS score
+        assert 1.0 >= diphone_freq[diphone] >= 0.0
+        dibs_score = 2.0 *  p_phone1_final * p_phone2_init / diphone_freq[diphone]
+        out_csv.writerow((''.join(diphone), dibs_score, convert_r_bool(label)))
+
+
 def extract(features, in_path, out_path):
     """Evaluate a word segmentation strategy."""
     print "Loading corpus..."
@@ -78,7 +113,8 @@ def extract(features, in_path, out_path):
     print "Extracting features..."
     feature_handlers = {
         DIPHONES: diphone_features,
-        PHONEMES: phoneme_counts,
+        PHONEMES: phoneme_features,
+        DIBS: dibs_features,
     }
     feature_handlers[features](corpus, out_csv)
 

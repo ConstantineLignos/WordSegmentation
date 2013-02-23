@@ -105,8 +105,21 @@ class Corpus(object):
         """Tuples of each diphone token and whether it is a boundary."""
         if not self._diphone_boundaries:
             self._diphone_boundaries = \
-                [self._extract_diphone_boundaries(utt) for utt in self._utterances]
+                [self._extract_diphone_boundaries(utt)
+                 for utt in self._utterances]
         return self._diphone_boundaries
+
+    @property
+    def outside_phoneme_counts(self):
+        """Two counters (initial, final) for phonemes at utterance edges."""
+        initial = Counter()
+        final = Counter()
+        for utt in self._utterances:
+            first, last = self._extract_outside_phonemes(utt)
+            initial[first] += 1
+            final[last] += 1
+        
+        return (initial, final)
 
     @staticmethod
     def _parse_line(line):
@@ -184,6 +197,23 @@ class Corpus(object):
 
         """
         return zip(Corpus._extract_diphones(utt), Corpus._parse_boundaries(utt))
+
+    @staticmethod
+    def _extract_outside_phonemes(utt):
+        """Return the first and last phonemes in an utterance.
+
+        >>> Corpus._extract_outside_phonemes([('h', '&', 'v'),
+        ... ('6',), ('d', 'r', 'I', 'N', 'k')]) # doctest: +NORMALIZE_WHITESPACE
+        ('h', 'k')
+        >>> Corpus._extract_outside_phonemes([('y', 'E', 's')])
+        ('y', 's')
+        >>> Corpus._extract_outside_phonemes([('6',), ('6',), ('6',)])
+        ('6', '6')
+        >>> Corpus._extract_outside_phonemes([('6',)])
+        ('6', '6')
+
+        """
+        return (utt[0][0], utt[-1][-1])
 
 
 if __name__ == "__main__":
