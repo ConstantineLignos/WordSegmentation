@@ -40,6 +40,7 @@ class Corpus(object):
                             for utt in self._utterances]
         self._word_counts = None
         self._phoneme_counts = None
+        self._boundary_counts = None
         self._diphone_counts = None
         self._diphone_boundaries = None
 
@@ -60,7 +61,7 @@ class Corpus(object):
         >>> c = Corpus('data/test-corpus.txt')
         >>> sorted(c.word_counts.items()) # doctest: +NORMALIZE_WHITESPACE
         [(('&', 'n', 'd'), 1), (('6',), 2), (('W', 'A', 't'), 1),
-         (('d', 'O', 'g', 'i'), 2), (('n', '9', 's'), 1)]
+         (('d', 'O', 'g', 'i'), 3), (('n', '9', 's'), 1)]
 
         """
         if not self._word_counts:
@@ -75,8 +76,8 @@ class Corpus(object):
         >>> c = Corpus('data/test-corpus.txt')
         >>> sorted(c.diphone_counts.items()) # doctest: +NORMALIZE_WHITESPACE
         [(('&', 'n'), 1), (('6', 'd'), 1), (('6', 'n'), 1), (('9', 's'), 1),
-         (('A', 't'), 1), (('O', 'g'), 2), (('W', 'A'), 1), (('d', '6'), 1),
-         (('d', 'O'), 2), (('g', 'i'), 2), (('n', '9'), 1), (('n', 'd'), 1),
+         (('A', 't'), 1), (('O', 'g'), 3), (('W', 'A'), 1), (('d', '6'), 1),
+         (('d', 'O'), 3), (('g', 'i'), 3), (('n', '9'), 1), (('n', 'd'), 1),
          (('s', 'd'), 1), (('t', '6'), 1)]
 
         """
@@ -92,16 +93,23 @@ class Corpus(object):
 
         >>> c = Corpus('data/test-corpus.txt')
         >>> sorted(c.phoneme_counts.items()) # doctest: +NORMALIZE_WHITESPACE
-        [('&', 1), ('6', 2), ('9', 1), ('A', 1), ('O', 2), ('W', 1), ('d', 3),
-        ('g', 2), ('i', 2), ('n', 2), ('s', 1), ('t', 1)]
+        [('&', 1), ('6', 2), ('9', 1), ('A', 1), ('O', 3), ('W', 1),
+         ('d', 4), ('g', 3), ('i', 3), ('n', 2), ('s', 1), ('t', 1)]
 
         """
         if not self._phoneme_counts:
             self._phoneme_counts = \
                 Counter(chain.from_iterable(chain(*utt)
                                             for utt in self._utterances))
-
         return self._phoneme_counts
+
+    @property
+    def boundary_counts(self):
+        """Number of boundaries in each utterance."""
+        if not self._boundary_counts:
+            self._boundary_counts = [len(utt) - 1 for utt in self._utterances]
+
+        return self._boundary_counts
 
     @property
     def diphone_boundaries(self):
