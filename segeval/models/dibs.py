@@ -24,4 +24,19 @@ from segeval.models.diphone import DiphoneSegmenter
 
 
 class DiBSSegmenter(DiphoneSegmenter):
-    pass
+
+    def classify_diphone(self, diphone):
+        """Classify a diphone as a word boundary or not."""
+        # If the diphone has never been seen, call it a word boundary
+        if diphone not in self.diphone_freqs[diphone]:
+            return True
+
+        # Estimate P(x|inital) and P(y|final) for a diphone xy
+        phone1, phone2 = diphone
+        p_phone1_final = self.final_freqs[phone1] if phone1 in self.final_freqs else 0.0
+        p_phone2_init = self.final_freqs[phone2] if phone2 in self.final_freqs else 0.0
+
+        # Compute the DiBS score
+        dibs_score = ((p_phone1_final * p_phone2_init * self.p_boundary) /
+                      self.diphone_freqs[diphone])
+        return dibs_score > 0.5
