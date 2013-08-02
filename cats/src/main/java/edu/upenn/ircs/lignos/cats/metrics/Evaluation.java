@@ -270,7 +270,8 @@ public class Evaluation {
 		
 		// Print the stress information and reset it
 		System.out.println("Learner's lexicon stress-initial rate: " + 
-				(initialStressWords / (float) numStressWords));
+				(initialStressWords / (float) numStressWords) + 
+				" (" + initialStressWords + "/" + numStressWords + " total)");
 		numStressWords = 0;
 		initialStressWords = 0;
 		
@@ -295,9 +296,10 @@ public class Evaluation {
 			}
 		}
 		
-		// Print the stress information and reset it
+		// Print the stress information for gold
 		System.out.println("Gold lexicon stress-initial rate: " + 
-				(initialStressWords / (float) numStressWords));
+				(initialStressWords / (float) numStressWords) +
+				" (" + initialStressWords + "/" + numStressWords + " total)");
 		
 		return Result.calcResult(truePositives, falsePositives, falseNegatives, trueNegatives);	
 	}
