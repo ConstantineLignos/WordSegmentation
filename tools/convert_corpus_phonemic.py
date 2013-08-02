@@ -67,8 +67,10 @@ def convert(syll_prons):
                 except UnicodeDecodeError:
                     pass
 
-        # Print if all words we transcribed
-        if len(word_prons) == len(words):
+        # Print if all words have non-empty syllabifications and were
+        # transcribed. A word can get an empty syllabification if it
+        # isn't really a word (i.e., "shh")
+        if all(word_prons) and len(word_prons) == len(words):
             print " ".join(word_prons)
             hits += 1
         else:
