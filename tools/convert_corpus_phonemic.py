@@ -1,6 +1,8 @@
-"""Convert a text corpus to a syllabified phonemic representation using CMUdict"""
+#!/usr/bin/env python
 
-# Copyright (C) 2010, 2011 Constantine Lignos
+"""Convert a text corpus to a syllabified phonemic form using CMUdict"""
+
+# Copyright (C) 2011-2013 Constantine Lignos
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,63 +20,30 @@
 import sys
 import re
 
+from lexinfo.cmudictreader import CMUDict
+
 from syllabification import format_sylls
-from eng_syll import eng_syllabify
+from eng_syll import kg_syllabify
 from esp_syll import esp_syllabify
 from esp_dict import EspLex
 
-ALT_RE = re.compile(".+\(\d+\)$")
-
-def load_pron_dict(dict_path):
-    """Load a dictionary in CMUdict format to a word->pronunciation dictionary.
-    
-    Only the first alternation pronunciation is kept. Keys are lowercased.
-    Values contain the pronunciation as a list of phonemes."""
-    prons = {}
-    
-    # Read in the dictionary
-    dict_file = open(dict_path, 'rU')
-    for line in dict_file:
-        # Skip comments
-        if line.startswith(";;;"):
-            continue
-        
-        # Split the line on double space
-        try:
-            (word, pron) = line.rstrip().split("  ")
-        except ValueError:
-            print >> sys.stderr, "Unreadable input in dictionary:", repr(line.rstrip())
-            continue
-        
-        # If the word is an alternate pron, skip it
-        if ALT_RE.match(word):
-            continue
-        
-        # Reformat
-        word = word.lower()
-        pron = pron.split()
-        
-        # Store the word
-        prons[word] = pron
-        
-    dict_file.close()
-    return prons
+ALT_RE = re.compile(r".+\(\d+\)$")
 
 
 def load_eng_syll_dict(dict_path):
     """Return a syllabified pron dict from the unsyllabified dict given."""
     # The raw pronunciation for each word
-    prons = load_pron_dict(dict_path)
-    
+    prons = CMUDict(dict_path)
+
     # The syllabified pronunciation of each word
-    return dict((word, eng_syllabify(pron)) for word, pron in prons.items())
+    return dict((word, kg_syllabify(pron)) for word, pron in prons.items())
 
 
 def load_esp_syll_dict(dict_path):
     """Return a syllabified pron dict from the unsyllabified dict given."""
     # Load the lexicon
     lex = EspLex(dict_path)
-        
+
     # Make a syllabified dictionary
     # pylint: disable-msg=W0142
     return dict((word, esp_syllabify(*lex.get_pron(word))) for word in lex)
@@ -87,9 +56,9 @@ def convert(syll_prons):
     misses = 0
     for line in sys.stdin:
         words = line.split()
-        word_prons = [format_sylls(syll_prons[word]) for word in line.split() 
+        word_prons = [format_sylls(syll_prons[word]) for word in line.split()
                       if word in syll_prons]
-        
+
         # Print misses to stderr
         for word in line.split():
             if word not in syll_prons:
@@ -97,8 +66,7 @@ def convert(syll_prons):
                     print >> sys.stderr, word.encode('ascii')
                 except UnicodeDecodeError:
                     pass
-        
-        
+
         # Print if all words we transcribed
         if len(word_prons) == len(words):
             print " ".join(word_prons)
@@ -117,12 +85,12 @@ def main():
     except IndexError:
         print "Usage: convert_phonemic dictionary lang"
         sys.exit(2)
-        
+
     if lang == "eng":
         syll_dict = load_eng_syll_dict(dict_path)
     elif lang == "esp":
         syll_dict = load_esp_syll_dict(dict_path)
-        
+
     convert(syll_dict)
 
 
