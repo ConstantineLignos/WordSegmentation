@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -15,7 +15,7 @@
 
  You should have received a copy of the GNU General Public License
  along with CATS.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package edu.upenn.ircs.lignos.cats;
 
@@ -59,7 +59,7 @@ public class Segment {
 	private static final String SEG_TRACE_PROP = "Seg_trace";
 	private static final String SEG_EVAL_LOG_PROP = "Seg_logging";
 	private static final String LEX_EVAL_LOG_PROP = "Lex_logging";
-	
+
 	// Known segmenters
 	private static final String SEGMENTER_BEAM_SUBTRACTIVE = "BeamSubtractive";
 	private static final String SEGMENTER_UNIT = "Unit";
@@ -68,49 +68,43 @@ public class Segment {
 	private static final String SEGMENTER_TROUGH = "Trough";
 
 	// Experimental controls
-	private String SEGMENTER_NAME;
-	private boolean STRESS_SENSITIVE_LOOKUP;
-	private boolean USE_TRUST;
-	private boolean LONGEST;
-	private double RANDOM_SEG_THRESHOLD;
-	private boolean DROP_STRESS;
-	private boolean USE_STRESS;
-	private boolean USE_PROB_MEM;
-	private boolean USE_SUBSEQ_DISCOUNT;
-	private boolean NORMALIZATION;
-	private boolean RANDOMIZATION;
-	private int BEAM_SIZE;
-	private double PROB_AMOUNT;
-	private double DECAY_AMOUNT;
-	
+	public String SEGMENTER_NAME;
+	public boolean STRESS_SENSITIVE_LOOKUP;
+	public boolean USE_TRUST;
+	public boolean LONGEST;
+	public double RANDOM_SEG_THRESHOLD;
+	public boolean DROP_STRESS;
+	public boolean USE_STRESS;
+	public boolean USE_PROB_MEM;
+	public boolean USE_SUBSEQ_DISCOUNT;
+	public boolean NORMALIZATION;
+	public boolean RANDOMIZATION;
+	public int BEAM_SIZE;
+	public double PROB_AMOUNT;
+	public double DECAY_AMOUNT;
+
 	// Debugging info
 	private boolean LEX_TRACE;
 	private boolean SEG_TRACE;
 	private boolean SEG_EVAL_TRACE;
 	private boolean LEX_EVAL_TRACE;
-	
+
 	// Learner structures
-	private String inputPath;
 	private String outputBase;
-	private List<Utterance> goldUtterances;
-	private List<Utterance> segUtterances;
-	private Lexicon goldLexicon;
-	private Lexicon segLexicon;
 	private SubSeqCounter counter;
-	
-	
-	public Segment(String inputPath, String outputBase) {
-		this.inputPath = inputPath;
+
+
+	public Segment(String outputBase) {
 		this.outputBase = outputBase;
 	}
-	
+
 	/**
 	 * Set parameters from a property file
 	 * @param propertyFile Path to the property file
 	 */
 	public boolean setParams(String propertyFile) {
 		// TODO Consider having it fall back to defaults for missing props
-		
+
 		Properties props = new Properties();
 		try {
 			props.load(new FileReader(propertyFile));
@@ -138,7 +132,7 @@ public class Segment {
 		NORMALIZATION = new Boolean(props.getProperty(NORMALIZATION_PROP));
 		RANDOMIZATION = new Boolean(props.getProperty(RANDOMIZATION_PROP));
 		USE_SUBSEQ_DISCOUNT = new Boolean(props.getProperty(SUBSEQDISCOUNT_PROP));
-		
+
 		// Set up the output path
 		if (USE_TRUST) outputBase += "_trust"; else outputBase += "_notrust";
 		if (USE_STRESS) outputBase += "_stress"; else outputBase += "_nostress";
@@ -146,19 +140,19 @@ public class Segment {
 		if (USE_PROB_MEM) outputBase += "_probmem"; else outputBase += "_perfectmem";
 		outputBase += "_" + SEGMENTER_NAME;
 		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) outputBase += "_" + BEAM_SIZE;
-		
+
 		return true;
 	}
 
 	/**
 	 * Load the input file, initializing goldUtterances and segUtterances
 	 */
-	private boolean load() {
+	private static List<Utterance> loadUtterances(String inputPath, boolean dropStress) {
+		List<Utterance> goldUtterances = new LinkedList<Utterance>();
 		Scanner input = null;
 		try {
 			input = new Scanner(new File(inputPath));
 			goldUtterances = new LinkedList<Utterance>();
-			segUtterances = new LinkedList<Utterance>();
 			// Parse each line as an utterance
 			System.out.println("Loading utterances from " + inputPath + " ...");
 			String line;
@@ -173,45 +167,43 @@ public class Segment {
 				}
 				// Create gold and non-gold utterances
 				try {
-					goldUtterances.add(new Utterance(line, true, DROP_STRESS));
-					segUtterances.add(new Utterance(line, false, DROP_STRESS));
+					goldUtterances.add(new Utterance(line, true, dropStress));
 				} catch (StringIndexOutOfBoundsException e) {
 					System.err.println("Could not parse input line " + lineNum);
-					return false;
+					return null;
 				}
 			}
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not read from input file: " + inputPath);
-			return false;
+			return null;
 		} finally {
 			if (input != null) {
 				input.close();
 			}
 		}
-		
-		// Build gold lexicon from gold utterances
-		goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances, STRESS_SENSITIVE_LOOKUP);
-		
-		// Create empty counter
-		counter = USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
-		
-		// Create empty segmentation lexicon
-		segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
-				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
-		
+
 		System.out.println("Done loading utterances.");
-		
+
 		// Return true if load succeeded
-		return true;
+		return goldUtterances;
 	}
-	
-	
+
+
 	/**
 	 * Run the segmenter on each utterance.
 	 */
-	private void segment() {
+	public Lexicon segment(List<Utterance> segUtterances) {
+		System.out.println("Initializing...");
+		// Create empty counter
+		counter = USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
+
+		// Create empty segmentation lexicon
+		Lexicon segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
+				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
+
 		System.out.println("Segmenting...");
-		
+		long segTime = System.currentTimeMillis();
+
 		// Create the segmenter
 		Segmenter seg; 
 		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
@@ -246,21 +238,25 @@ public class Segment {
 			if (SEG_TRACE) {
 				System.out.println("Segmentation:" + utterance.getSegText());
 			}
-			
+
 			// Tick the lexicon
 			segLexicon.tick();
 		}
-		
+
+		segTime = System.currentTimeMillis() - segTime;
 		// Output stats
 		System.out.println(seg.getStats());
-		System.out.println("Done segmenting.");
+		System.out.println("Segmentation took " + segTime / 1000F + " seconds.");
+
+		return segLexicon;
 	}
-	
-	
+
+
 	/**
 	 * Evaluate the segmentation against gold
 	 */
-	private Result[] eval() {
+	public Result[] eval(List<Utterance> goldUtterances, List<Utterance> segUtterances, 
+			Lexicon goldLexicon, Lexicon segLexicon) {
 		System.out.println("Evaluating...");
 		// TODO Refactor logging
 		PrintStream segLog;
@@ -291,12 +287,12 @@ public class Segment {
 				segLog, perfLog, EvalMethod.BOUNDARIES);
 		System.out.println("Boundaries:");
 		System.out.println(boundaryResult);
-		
+
 		Result wordResult = Evaluation.evalUtterances(goldUtterances, segUtterances, 
 				segLog, wordLog, EvalMethod.WORDS);
 		System.out.println("Words:");
 		System.out.println(wordResult);
-		
+
 		PrintStream lexLog;
 		try {
 			lexLog = LEX_EVAL_TRACE ? 
@@ -307,19 +303,19 @@ public class Segment {
 		}
 		System.out.println("Lexicon:");
 		Result lexResult = Evaluation.evalLexicons(goldLexicon, segLexicon, lexLog);
-		
+
 		// TODO Close logs properly
-		
+
 		System.out.println(lexResult);
 		System.out.println("Done evaluating.");
 		return new Result[] {boundaryResult, wordResult, lexResult};
 	}
-	
+
 
 	/**
 	 * Write output to the pre-set path.
 	 */
-	private void writeOutput() {
+	public void writeOutput(List<Utterance> segUtterances, Lexicon segLexicon) {
 		try {
 			// Write segmentation
 			PrintStream out = new PrintStream(outputBase + "_seg.txt");
@@ -327,7 +323,7 @@ public class Segment {
 				out.println(utt.getSegText());
 			}
 			out.close();
-			
+
 			// Write lexicon, sorted by score
 			ArrayList<Word> words = new ArrayList<Word>(segLexicon.getWords());
 			Collections.sort(words, Collections.reverseOrder(segLexicon.new WordScoreComparator()));
@@ -336,16 +332,16 @@ public class Segment {
 				out.println(segLexicon.dumpWord(w));
 			}
 			out.close();
-			
+
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open output files");
 		}
 	}
-	
+
 	private static class CommentedProperties {
 		private Properties properties;
 		private String comments;
-	
+
 		public CommentedProperties(Properties properties, String comments) {
 			this.properties = properties;
 			this.comments = comments;
@@ -355,7 +351,7 @@ public class Segment {
 
 		public String getComments() {return comments;}
 	}
-		
+
 	private static CommentedProperties defaultProperties() {
 		Properties props = new Properties();
 		StringBuilder comments = new StringBuilder();
@@ -376,7 +372,7 @@ public class Segment {
 		props.setProperty(DROP_STRESS_PROP, "true");
 		comments.append(USE_STRESS_PROP + ": Whether the segmenter is given stress information.\n");
 		props.setProperty(USE_STRESS_PROP, "false");
-		
+
 		// Lexicon behavior parameters
 		comments.append(PROB_MEM_PROP + ": Whether recall of words from the lexicon is proabilistic.\n");
 		props.setProperty(PROB_MEM_PROP, "false");
@@ -388,7 +384,7 @@ public class Segment {
 		props.setProperty(DECAY_AMT_PROP, "0.0");
 		comments.append(NORMALIZATION_PROP + ": Whether to normalize scores in the lexicon.\n");
 		props.setProperty(NORMALIZATION_PROP, "false");
-		
+
 		// Segmenter behavior parameters
 		comments.append(LONGEST_PROP + ": Whether a subtractive segmenter is forced to use the longest words " +
 				"possible in its segmentation.\n");
@@ -402,7 +398,7 @@ public class Segment {
 		props.setProperty(RANDOMIZATION_PROP, "false");
 		comments.append(SUBSEQDISCOUNT_PROP + ": Whether to divide words scores by subsequence frequency.\n");
 		props.setProperty(SUBSEQDISCOUNT_PROP, "false");
-		
+
 		// Logging parameters
 		comments.append(LEX_TRACE_PROP + ": Whether to print debugging information for lexicon " +
 				"stores and lookups\n");
@@ -423,7 +419,7 @@ public class Segment {
 	public static void main(String[] argv) {
 		callSegmenter(argv);
 	}
-	
+
 	public static Result[] callSegmenter(String[] argv){
 		if (argv.length == 1) {
 			if (argv[0].equals("--dump-defaults")) {
@@ -439,35 +435,34 @@ public class Segment {
 		else if (argv.length == 3) {
 			// Start up a segmenter
 			long startTime = System.currentTimeMillis();
-			Segment seg = new Segment(argv[0], argv[1]);
-			if (!seg.setParams(argv[2])) {
-				System.err.println("The properties file " + argv[2] + " could not be read.");
-				System.exit(1);
-			}
+			String inputPath = argv[0];
+			String outPath = argv[1];
+			String propsPath = argv[2];
+
+			// Load gold utterances and lexicon
 			long loadTime = System.currentTimeMillis();
-			if (!seg.load()) {
-				System.err.println("The input file " + argv[0] + " could not be read.");
+			List<Utterance> goldUtterances = loadUtterances(inputPath, false);
+			if (goldUtterances == null) {
+				System.err.println("The input file " + inputPath + " could not be read.");
 				System.exit(1);
 			}
 			loadTime = System.currentTimeMillis() - loadTime;
 			System.out.println("Loading took " + loadTime / 1000F + " seconds.");
-			long segTime = System.currentTimeMillis();
-			seg.segment();
-			segTime = System.currentTimeMillis() - segTime;
-			System.out.println("Segmentation took " + segTime / 1000F + " seconds.");
-			Result[] evalResults = seg.eval();
-			seg.writeOutput();
+
+			// Segment
+			Result[] evalResults = (new SegRunner(goldUtterances, propsPath)).runSegmenter(outPath);
+
 			long endTime = System.currentTimeMillis() - startTime;
 			System.out.println("Run took " + endTime / 1000F + " seconds.");
 			return evalResults;
 		}
-		
+
 		// If we fell through, print usage
 		System.err.println("Usage: Segment input output_base properties_file");
 		System.err.println("To generate a properties file with defaults, run:");
 		System.err.println("Segment --dump-defaults");
 		System.exit(2);
-		
+
 		// Satisfy compiler with guaranteed return
 		return null;
 	}

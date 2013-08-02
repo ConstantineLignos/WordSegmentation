@@ -34,7 +34,7 @@ public class Utterance {
 	private static final Pattern anyStressPattern = Pattern.compile("\\d");
 	
 	// We use primitive arrays where possible, but since units and stresses
-	// should be able to be easily slices, we have to use Boolean
+	// should be able to be easily sliced, we have to use Boolean
 	private Boolean[] boundaries;
 	private String[] units;
 	private Boolean[] stresses;
@@ -74,12 +74,31 @@ public class Utterance {
 		this.boundaries = boundaries;
 		length = units.length;
 	}
+	
+	/**
+	 * Create an utterance by copying fields from the specified utterance, copying boundaries if 
+	 * specified.
+	 * @param utt the utterance to copy from
+	 * @param copyBoundaries whether to copy boundaries over  
+	 */
+	public Utterance(Utterance utt, boolean copyBoundaries){
+		units = Arrays.copyOf(utt.units, utt.units.length);
+		stresses = Arrays.copyOf(utt.stresses, utt.stresses.length);
+		if (copyBoundaries) {
+			boundaries = Arrays.copyOf(utt.boundaries, utt.boundaries.length);
+		}
+		else {
+			boundaries = new Boolean[utt.boundaries.length];
+			Arrays.fill(boundaries, false);
+		}
+		length = units.length;
+	}
 
 	
 	/**
 	 * Reduce the stresses in the utterance
 	 */
-	private void reduceStresses() {
+	public void reduceStresses() {
 		// Do a look-ahead stress reduction- if current and next unit have stress,
 		// reduce the current
 		for (int i=0; i < stresses.length - 1; i++) {
