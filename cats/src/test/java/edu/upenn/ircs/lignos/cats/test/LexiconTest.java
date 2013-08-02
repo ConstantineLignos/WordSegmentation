@@ -139,6 +139,9 @@ public class LexiconTest extends TestCase{
 	public void testDecayBasic() {
 		// Make a lexicon with decay
 		Lexicon lex = new Lexicon(true, false, false, false, false, 0.0, 0.1, null);
+		// Increment twice, as a single increment will generally be the same as the minimum
+		// score, which cannot decay further.
+		lex.incUtteranceWords(i, iStress, new Boolean[] {}, null);
 		lex.incUtteranceWords(i, iStress, new Boolean[] {}, null);
 		
 		// Check the initial score
@@ -150,7 +153,7 @@ public class LexiconTest extends TestCase{
 		// Score2 should be lower
 		double score2 = lex.getScore(lex.getWord(i, iStress), null);
 		
-		assert(score2 < score1);
+		assertTrue(score2 < score1);
 	}
 	
 }
