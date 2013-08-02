@@ -1,15 +1,18 @@
-.DS_Store
+# Unneeded files
 *~
 *.swp
 *.pyc
 *.class
-*.project
-*.pydevproject
+.*
 
-cats/out
-cats/build
-cats/bin
-cats/cats.jar
+# CATS
+cats/target
 
+# Data
+out
 data
-.Rproj.user
+*.csv
+*.pdf
+*.txt
+*.Rout
+*.out
