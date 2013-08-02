@@ -26,7 +26,7 @@ import edu.upenn.ircs.lignos.cats.Utils;
 /**
  * A counter particularly for sequences of String[] that wraps SimpleCounter. This does not inherit 
  * from SimpleCounter to prevent accidental use of the underlying SimpleCounter methods, which can 
- * have disastrous consequences as the object type of the SimpleCounter arguments makes slient type
+ * have disastrous consequences as the object type of the SimpleCounter arguments makes silent type
  * safety violations easy.
  */
 public class SubSeqCounter {
