@@ -36,7 +36,10 @@
           <programs>
             <program>
               <mainClass>${app.mainClass}</mainClass>
-              <name>app</name>
+              <name>cats</name>
+              <jvmSettings>
+                <maxMemorySize>1g</maxMemorySize>
+              </jvmSettings>
             </program>
           </programs>
         </configuration>
