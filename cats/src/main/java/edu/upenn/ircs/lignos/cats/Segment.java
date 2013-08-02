@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2010, 2011 Constantine Lignos
+ Copyright (C) 2010-2013 Constantine Lignos
 
  This file is a part of CATS.
 
@@ -65,6 +65,7 @@ public class Segment {
 	private static final String SEGMENTER_UNIT = "Unit";
 	private static final String SEGMENTER_UTTERANCE = "Utterance";
 	private static final String SEGMENTER_RANDOM = "Random";
+	private static final String SEGMENTER_TROUGH = "Trough";
 
 	// Experimental controls
 	private String SEGMENTER_NAME;
@@ -209,6 +210,15 @@ public class Segment {
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
 			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD, segLexicon);
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_TROUGH)) {
+			seg = new TPTroughSegmenter(segLexicon);
+			// TODO: Refactor so we don't need this cast. We probably want to make train a method
+			// of all segmenters.
+			TPTroughSegmenter segTrainer = ((TPTroughSegmenter) seg);
+			for (Utterance utterance : segUtterances) {
+				segTrainer.train(utterance, SEG_TRACE);	
+			}
 		}
 		else {
 			throw new RuntimeException("Unknown segmenter specified: " + SEGMENTER_NAME);

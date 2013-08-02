@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2010, 2011 Constantine Lignos
+ Copyright (C) 2010-2013 Constantine Lignos
 
  This file is a part of CATS.
 
@@ -42,8 +42,8 @@ public class Utterance {
 	public final int length;
 	
 	// Pattern for finding boundaries
-	private final static char WORD_BOUNDARY = ' ';
-	private final static char SYLL_BOUNDARY = '|';
+	public final static char WORD_BOUNDARY = ' ';
+	public final static char SYLL_BOUNDARY = '|';
 	
 	/**
 	 * Create an utterance from text, noting whether we should use gold standard
