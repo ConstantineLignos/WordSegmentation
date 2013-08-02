@@ -17,8 +17,10 @@
  along with CATS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package edu.upenn.ircs.lignos.cats.counters;
+package edu.upenn.ircs.lignos.cats.test;
 
+import edu.upenn.ircs.lignos.cats.counters.SimpleCounter;
+import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import junit.framework.TestCase;
 
 public class SimpleCounterTest extends TestCase{

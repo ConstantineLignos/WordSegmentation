@@ -17,11 +17,12 @@
  along with CATS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package edu.upenn.ircs.lignos.cats.metrics;
+package edu.upenn.ircs.lignos.cats.test;
 
 import java.util.Arrays;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
+import edu.upenn.ircs.lignos.cats.metrics.Evaluation;
 import junit.framework.TestCase;
 
 public class EvaluationTest extends TestCase{

@@ -23,7 +23,7 @@ import edu.upenn.ircs.lignos.cats.Utils;
 import edu.upenn.ircs.lignos.cats.Utterance;
 import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.segmenters.SegUtil;
-import gnu.trove.THashMap;
+import gnu.trove.map.hash.THashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;

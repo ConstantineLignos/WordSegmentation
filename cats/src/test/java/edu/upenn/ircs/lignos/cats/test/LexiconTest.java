@@ -17,12 +17,14 @@
  along with CATS.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package edu.upenn.ircs.lignos.cats.lexicon;
+package edu.upenn.ircs.lignos.cats.test;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
+import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
+import edu.upenn.ircs.lignos.cats.lexicon.Word;
 
 import junit.framework.TestCase;
 

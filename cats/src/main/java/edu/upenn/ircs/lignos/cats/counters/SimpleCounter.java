@@ -20,7 +20,7 @@
 package edu.upenn.ircs.lignos.cats.counters;
 
 import java.util.Map;
-import gnu.trove.THashMap;
+import gnu.trove.map.hash.THashMap;
 
 /**
  * A simple counter class.
