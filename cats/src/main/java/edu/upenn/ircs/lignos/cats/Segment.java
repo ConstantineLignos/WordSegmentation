@@ -66,22 +66,28 @@ public class Segment {
 	private static final String SEGMENTER_UTTERANCE = "Utterance";
 	private static final String SEGMENTER_RANDOM = "Random";
 	private static final String SEGMENTER_TROUGH = "Trough";
-
+	
 	// Experimental controls
-	public String SEGMENTER_NAME;
 	public boolean STRESS_SENSITIVE_LOOKUP;
-	public boolean USE_TRUST;
-	public boolean LONGEST;
-	public double RANDOM_SEG_THRESHOLD;
+	public String SEGMENTER_NAME;
 	public boolean DROP_STRESS;
-	public boolean USE_STRESS;
-	public boolean USE_PROB_MEM;
+
+	// Lexicon
 	public boolean USE_SUBSEQ_DISCOUNT;
 	public boolean NORMALIZATION;
-	public boolean RANDOMIZATION;
-	public int BEAM_SIZE;
+	public boolean USE_PROB_MEM;
 	public double PROB_AMOUNT;
 	public double DECAY_AMOUNT;
+	
+	// Segmenter-specific
+	// Beam subtractive
+	public boolean USE_TRUST;
+	public boolean LONGEST;
+	public boolean USE_STRESS;
+	public boolean RANDOMIZATION;
+	public int BEAM_SIZE;
+	// Random
+	public double RANDOM_SEG_THRESHOLD;
 
 	// Debugging info
 	private boolean LEX_TRACE;
