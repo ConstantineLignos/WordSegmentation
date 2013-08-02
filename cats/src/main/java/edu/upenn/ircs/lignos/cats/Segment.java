@@ -154,23 +154,39 @@ public class Segment {
 	 * Load the input file, initializing goldUtterances and segUtterances
 	 */
 	private boolean load() {
+		Scanner input = null;
 		try {
-			Scanner input = new Scanner(new File(inputPath));
+			input = new Scanner(new File(inputPath));
 			goldUtterances = new LinkedList<Utterance>();
 			segUtterances = new LinkedList<Utterance>();
 			// Parse each line as an utterance
 			System.out.println("Loading utterances from " + inputPath + " ...");
 			String line;
+			int lineNum = 0;
 			while (input.hasNextLine()) {
 				// Strip trailing whitespace
 				line = input.nextLine().replaceAll("\\s+$", "");
+				lineNum++;
+				if (line.length() == 0) {
+					System.err.println("Empty line on input line " + lineNum);
+					continue;
+				}
 				// Create gold and non-gold utterances
-				goldUtterances.add(new Utterance(line, true, DROP_STRESS));
-				segUtterances.add(new Utterance(line, false, DROP_STRESS));
+				try {
+					goldUtterances.add(new Utterance(line, true, DROP_STRESS));
+					segUtterances.add(new Utterance(line, false, DROP_STRESS));
+				} catch (StringIndexOutOfBoundsException e) {
+					System.err.println("Could not parse input line " + lineNum);
+					return false;
+				}
 			}
 		} catch (FileNotFoundException e) {
 			System.err.println("Could not read from input file: " + inputPath);
 			return false;
+		} finally {
+			if (input != null) {
+				input.close();
+			}
 		}
 		
 		// Build gold lexicon from gold utterances
