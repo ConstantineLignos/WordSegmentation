@@ -216,7 +216,11 @@ public class Evaluation {
 				falseNegatives, trueNegatives);
 		if(log != null) {
 			switch (method) {
-			case BOUNDARIES: log.println("Final," + finalResult.toCSVString()); break;
+			case BOUNDARIES:
+				log.println("Final," + finalResult.toCSVString());
+				break;
+			default:
+				break;
 			}
 		}
 
