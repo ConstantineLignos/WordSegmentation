@@ -3,8 +3,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>edu.upenn.ircs</groupId>
-  <artifactId>cats-word-segmenter</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <artifactId>cats-segmenter</artifactId>
+  <version>0.9-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>cats-word-segmenter</name>
@@ -16,6 +16,7 @@
   </properties>
 
   <build>
+    <finalName>${project.artifactId}</finalName>
     <plugins>
 
       <plugin>
@@ -50,6 +51,16 @@
             </program>
           </programs>
         </configuration>
+	<!-- If you want to bind this to packaging
+	<executions>
+	  <execution>
+            <id>package</id>
+            <goals>
+              <goal>assemble</goal>
+            </goals>
+	  </execution>
+	</executions>
+	-->
       </plugin>
 
       <plugin>
@@ -59,11 +70,27 @@
         <configuration>
           <archive>
             <manifest>
-              <addClasspath>true</addClasspath>
+	      <addClasspath>true</addClasspath>
+	      <classpathPrefix>${project.build.directory}/lib</classpathPrefix>
 	      <mainClass>${app.mainClass}</mainClass>
             </manifest>
           </archive>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>

@@ -1,4 +1,3 @@
 #!/bin/sh
-# Requires that you have already run the following line:
-#mvn package appassembler:assemble
-sh target/appassembler/bin/segexperiment "$@"
+# Requires that you have already run mvn package
+java -Xmx2g -cp target/cats-segmenter.jar edu.upenn.ircs.lignos.cats.SegExperiment "$@"
