@@ -443,7 +443,7 @@ public class Segment {
 		if (useTestData) {
 			loadTime = System.currentTimeMillis();
 			goldTestUtterances = Utterance.loadUtterances(testPath);
-			if (goldTrainUtterances == null) {
+			if (goldTestUtterances == null) {
 				System.err.println("Could not reading testing file " + testPath);
 				System.exit(1);
 			}
