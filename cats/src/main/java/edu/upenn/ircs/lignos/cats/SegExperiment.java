@@ -3,8 +3,10 @@ package edu.upenn.ircs.lignos.cats;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -75,28 +77,35 @@ public class SegExperiment implements Runnable  {
 	 * @param args Command line arguments
 	 */
 	public static void main(String[] args) {
-		// TODO: Read these in from a file
-		String[] propsFiles = {"props/utterance.props", "props/random.props", 
-				"props/random_oracle.props", "props/unit.props", "props/trough.props",
-				"props/notrust.props", "props/nobeam.props",  "props/default.props",
-				"props/reduced.props", "props/stress.props", "props/notrust_probmem.props",
-				"props/nobeam_probmem.props", "props/default_probmem.props",
-				"props/reduced_probmem.props", "props/stress_probmem.props"};
-
-		if (args.length != 3) {
-			System.err.println("Usage: SegExperiment input output_base csv_output");
+		if (args.length != 4) {
+			System.err.println("Usage: SegExperiment input output_base propslist csv_output");
 			System.exit(2);
 		}
 
 		// Extract arguments
 		String inputPath = args[0];
 		String outBase = args[1];
-		String outPath = args[2];
+		String propsListPath = args[2];
+		String outPath = args[3];
 
+		// Read in the names of the props files
+		List<String> propsFiles = new LinkedList<String>();
+		Scanner propsScanner = null;
+		try {
+			propsScanner = new Scanner(new File(propsListPath));
+		} catch (FileNotFoundException e1) {
+			System.err.println("Could not read list of props files at " + propsListPath);
+			System.exit(1);
+		}
+		while (propsScanner.hasNext()) {
+			propsFiles.add(propsScanner.next());
+		}
+		propsScanner.close();
+		
 		// Read in the input
 		List<Utterance> goldUtterances = Utterance.loadUtterances(inputPath);
 		if (goldUtterances == null) {
-			System.err.println("The input file " + inputPath + " could not be read.");
+			System.err.println("Could not read input file " + inputPath);
 			System.exit(1);
 		}
 
@@ -112,8 +121,8 @@ public class SegExperiment implements Runnable  {
 		out.println("Condition,BP,BR,BF,BH,BFA,BAP,WP,WR,WF,LP,LR,LF");
 
 		// Set up place to store the results of each line
-		String[] outLines = new String[propsFiles.length];
-		System.out.println("Number of experiments to run: " + propsFiles.length);
+		String[] outLines = new String[propsFiles.size()];
+		System.out.println("Number of experiments to run: " + propsFiles.size());
 
 		// Get the number of cores and start a thread pool
 		int cores = Runtime.getRuntime().availableProcessors();
