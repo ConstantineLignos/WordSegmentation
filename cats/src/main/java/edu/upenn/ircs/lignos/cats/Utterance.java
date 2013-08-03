@@ -19,9 +19,12 @@
 
 package edu.upenn.ircs.lignos.cats;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
@@ -217,6 +220,51 @@ public class Utterance {
 		return prettyString;
 	}
 	
+
+	/**
+	 * Return a list of the utterances loaded from the specified path.
+	 * @param path the path to load utterances from
+	 * @return a List of Utterances
+	 */
+	public static List<Utterance> loadUtterances(String path) {
+		List<Utterance> goldUtterances = new LinkedList<Utterance>();
+		Scanner input = null;
+		try {
+			System.out.println("Loading utterances from " + path + " ...");
+			input = new Scanner(new File(path));
+			goldUtterances = new LinkedList<Utterance>();
+
+			// Parse each line as an utterance
+			String line;
+			int lineNum = 0;
+			while (input.hasNextLine()) {
+				// Strip trailing whitespace
+				line = input.nextLine().replaceAll("\\s+$", "");
+				lineNum++;
+				if (line.length() == 0) {
+					System.err.println("Empty line on input line " + lineNum);
+					continue;
+				}
+				// Add the utterance to gold, returning an error if it could not be parsed
+				try {
+					goldUtterances.add(new Utterance(line, true, false));
+				}
+				catch (StringIndexOutOfBoundsException e) {
+					System.err.println("Could not parse input line " + lineNum);
+					// Propagate the error as the file is bad
+					throw new FileNotFoundException();
+				}
+			}
+		} 
+		catch (FileNotFoundException e) {
+			return null;
+		}
+		finally {
+			if (input != null) input.close();
+		}
+		return goldUtterances;
+	}
+
 	/**
 	 * Return a string that reflects the actual segmentation of the utterance,
 	 * joining non-boundaries with "|" and boundaries with " ".

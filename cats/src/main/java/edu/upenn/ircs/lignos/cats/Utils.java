@@ -19,6 +19,11 @@
 
 package edu.upenn.ircs.lignos.cats;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Properties;
+
 public class Utils {
 	private static final String UNIT_DELIM = "|";
 	
@@ -64,5 +69,22 @@ public class Utils {
 		output.append(units[i] + (stresses[i] ? "(1)" : ""));
 		
 		return output.toString();
+	}
+	
+	/**
+	 * Read a Properties object from the specified path.
+	 * @param path the path to read properties from
+	 * @return a Properties object or null if the file could not be read
+	 */
+	public static Properties loadProps(String path) {
+		Properties props = new Properties();
+		try {
+			props.load(new FileReader(path));
+			return props;
+		} catch (FileNotFoundException e) {
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
 	}
 }

@@ -36,9 +36,16 @@
           <programs>
             <program>
               <mainClass>${app.mainClass}</mainClass>
-              <name>cats</name>
+              <name>segment</name>
               <jvmSettings>
                 <maxMemorySize>1g</maxMemorySize>
+              </jvmSettings>
+            </program>
+            <program>
+              <mainClass>edu.upenn.ircs.lignos.cats.SegExperiment</mainClass>
+              <name>segexperiment</name>
+              <jvmSettings>
+                <maxMemorySize>2g</maxMemorySize>
               </jvmSettings>
             </program>
           </programs>

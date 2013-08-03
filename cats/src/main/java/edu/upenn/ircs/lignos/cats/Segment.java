@@ -19,30 +19,33 @@
 
 package edu.upenn.ircs.lignos.cats;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Properties;
 
 import edu.upenn.ircs.lignos.cats.counters.SubSeqCounter;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation;
-import edu.upenn.ircs.lignos.cats.metrics.Result;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation.EvalMethod;
-import edu.upenn.ircs.lignos.cats.segmenters.*;
+import edu.upenn.ircs.lignos.cats.metrics.Result;
+import edu.upenn.ircs.lignos.cats.segmenters.BeamSubtractiveSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.RandomSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.Segmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.TPTroughSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.UnitSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.UtteranceSegmenter;
 
 public class Segment {
 	// Parameter names used for reading from property files
+	// Stress sensitive lookup is public because it affects lexicon creation
+	public static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
 	private static final String SEGMENTER_PROP = "Segmenter";
-	private static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
 	private static final String TRUST_PROP = "Use_trust";
 	private static final String DROP_STRESS_PROP = "Drop_stress";
 	private static final String USE_STRESS_PROP = "Use_stress";
@@ -66,7 +69,7 @@ public class Segment {
 	private static final String SEGMENTER_UTTERANCE = "Utterance";
 	private static final String SEGMENTER_RANDOM = "Random";
 	private static final String SEGMENTER_TROUGH = "Trough";
-	
+
 	// Experimental controls
 	public boolean STRESS_SENSITIVE_LOOKUP;
 	public String SEGMENTER_NAME;
@@ -78,7 +81,7 @@ public class Segment {
 	public boolean USE_PROB_MEM;
 	public double PROB_AMOUNT;
 	public double DECAY_AMOUNT;
-	
+
 	// Segmenter-specific
 	// Beam subtractive
 	public boolean USE_TRUST;
@@ -100,25 +103,18 @@ public class Segment {
 	private SubSeqCounter counter;
 
 
-	public Segment(String outputBase) {
+	public Segment(Properties props, String outputBase) {
 		this.outputBase = outputBase;
+		setParams(props);
 	}
 
 	/**
 	 * Set parameters from a property file
 	 * @param propertyFile Path to the property file
 	 */
-	public boolean setParams(String propertyFile) {
+	public boolean setParams(Properties props) {
 		// TODO Consider having it fall back to defaults for missing props
 
-		Properties props = new Properties();
-		try {
-			props.load(new FileReader(propertyFile));
-		} catch (FileNotFoundException e) {
-			return false;
-		} catch (IOException e) {
-			return false;
-		}
 		// Look up each property
 		SEGMENTER_NAME = props.getProperty(SEGMENTER_PROP);
 		STRESS_SENSITIVE_LOOKUP = new Boolean(props.getProperty(STRESS_SENSITIVE_PROP));
@@ -149,51 +145,6 @@ public class Segment {
 
 		return true;
 	}
-
-	/**
-	 * Load the input file, initializing goldUtterances and segUtterances
-	 */
-	private static List<Utterance> loadUtterances(String inputPath, boolean dropStress) {
-		List<Utterance> goldUtterances = new LinkedList<Utterance>();
-		Scanner input = null;
-		try {
-			input = new Scanner(new File(inputPath));
-			goldUtterances = new LinkedList<Utterance>();
-			// Parse each line as an utterance
-			System.out.println("Loading utterances from " + inputPath + " ...");
-			String line;
-			int lineNum = 0;
-			while (input.hasNextLine()) {
-				// Strip trailing whitespace
-				line = input.nextLine().replaceAll("\\s+$", "");
-				lineNum++;
-				if (line.length() == 0) {
-					System.err.println("Empty line on input line " + lineNum);
-					continue;
-				}
-				// Create gold and non-gold utterances
-				try {
-					goldUtterances.add(new Utterance(line, true, dropStress));
-				} catch (StringIndexOutOfBoundsException e) {
-					System.err.println("Could not parse input line " + lineNum);
-					return null;
-				}
-			}
-		} catch (FileNotFoundException e) {
-			System.err.println("Could not read from input file: " + inputPath);
-			return null;
-		} finally {
-			if (input != null) {
-				input.close();
-			}
-		}
-
-		System.out.println("Done loading utterances.");
-
-		// Return true if load succeeded
-		return goldUtterances;
-	}
-
 
 	/**
 	 * Run the segmenter on each utterance.
@@ -423,10 +374,6 @@ public class Segment {
 	}
 
 	public static void main(String[] argv) {
-		callSegmenter(argv);
-	}
-
-	public static Result[] callSegmenter(String[] argv){
 		if (argv.length == 1) {
 			if (argv[0].equals("--dump-defaults")) {
 				CommentedProperties comProps = defaultProperties();
@@ -439,37 +386,69 @@ public class Segment {
 			}
 		}
 		else if (argv.length == 3) {
-			// Start up a segmenter
-			long startTime = System.currentTimeMillis();
 			String inputPath = argv[0];
 			String outPath = argv[1];
 			String propsPath = argv[2];
+			callSegmenter(inputPath, outPath, propsPath);
+		}
+		else {
+			// If we fell through, print usage
+			System.err.println("Usage: Segment input output_base properties_file");
+			System.err.println("To generate a properties file with defaults, run:");
+			System.err.println("Segment --dump-defaults");
+			System.exit(64);
+		}
+	}
 
-			// Load gold utterances and lexicon
-			long loadTime = System.currentTimeMillis();
-			List<Utterance> goldUtterances = loadUtterances(inputPath, false);
-			if (goldUtterances == null) {
-				System.err.println("The input file " + inputPath + " could not be read.");
-				System.exit(1);
+	public static Result[] callSegmenter(String inputPath, String outPath, String propsPath){
+		long startTime = System.currentTimeMillis();
+
+		// Load gold utterances and lexicon
+		long loadTime = System.currentTimeMillis();
+		List<Utterance> goldUtterances = Utterance.loadUtterances(inputPath);
+		if (goldUtterances == null) {
+			System.err.println("The input file " + inputPath + " could not be read.");
+			System.exit(1);
+		}
+		loadTime = System.currentTimeMillis() - loadTime;
+		System.out.println("Loading took " + loadTime / 1000F + " seconds.");
+
+		// Load props
+		Properties props = Utils.loadProps(propsPath);
+		boolean stress_sensitive_lookup = new Boolean(props.getProperty(STRESS_SENSITIVE_PROP));
+
+		// Create the gold lexicon
+		Lexicon goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances,
+				stress_sensitive_lookup);
+
+		// Segment
+		Result[] evalResults = runSegmenter(goldUtterances, goldLexicon, props, outPath);
+
+		long endTime = System.currentTimeMillis() - startTime;
+		System.out.println("Run took " + endTime / 1000F + " seconds.");
+		return evalResults;
+	}
+
+	public static Result[] runSegmenter(List<Utterance> goldUtterances, Lexicon goldLexicon,
+			Properties props, String outPath) {
+		Segment seg = new Segment(props, outPath);
+
+		// Copy utterances into segUtterances
+		boolean dropStress = seg.DROP_STRESS;
+		List<Utterance> segUtterances = new LinkedList<Utterance>();
+		for (Utterance utt : goldUtterances) {
+			Utterance segUtt = new Utterance(utt, false);
+			if (dropStress) {
+				segUtt.reduceStresses();
 			}
-			loadTime = System.currentTimeMillis() - loadTime;
-			System.out.println("Loading took " + loadTime / 1000F + " seconds.");
-
-			// Segment
-			Result[] evalResults = (new SegRunner(goldUtterances, propsPath)).runSegmenter(outPath);
-
-			long endTime = System.currentTimeMillis() - startTime;
-			System.out.println("Run took " + endTime / 1000F + " seconds.");
-			return evalResults;
+			segUtterances.add(segUtt);
 		}
 
-		// If we fell through, print usage
-		System.err.println("Usage: Segment input output_base properties_file");
-		System.err.println("To generate a properties file with defaults, run:");
-		System.err.println("Segment --dump-defaults");
-		System.exit(2);
+		Lexicon segLexicon = seg.segment(segUtterances);
+		// Output eval
+		Result[] evalResults = seg.eval(goldUtterances, segUtterances, goldLexicon, segLexicon);
+		seg.writeOutput(segUtterances, segLexicon);
 
-		// Satisfy compiler with guaranteed return
-		return null;
+		return evalResults;
 	}
 }
