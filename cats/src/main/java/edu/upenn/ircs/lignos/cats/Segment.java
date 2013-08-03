@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -37,6 +36,9 @@ import edu.upenn.ircs.lignos.cats.metrics.Result;
 import edu.upenn.ircs.lignos.cats.segmenters.*;
 
 public class Segment {
+	// Command line arguments
+	public static final String NO_TEST_FILE = "none";
+	
 	// Parameter names used for reading from property files
 	// Stress sensitive lookup is public because it affects lexicon creation
 	public static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
@@ -98,7 +100,8 @@ public class Segment {
 	// Learner structures
 	private String outputBase;
 	private SubSeqCounter counter;
-
+	public Lexicon lexicon;
+	private Segmenter seg;
 
 	public Segment(Properties props, String outputBase) {
 		this.outputBase = outputBase;
@@ -146,69 +149,70 @@ public class Segment {
 	/**
 	 * Run the segmenter on each utterance.
 	 */
-	public Lexicon segment(List<Utterance> segUtterances) {
+	public void segment(List<Utterance> segUtterances, boolean training) {
+		// We need to either be training or already have a lexicon
+		assert(training || lexicon != null);
+		
 		System.out.println("Initializing...");
 		// Create empty counter
-		counter = USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
+		counter = training && USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
 
 		// Create empty segmentation lexicon
-		Lexicon segLexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
-				USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
+		if (training) {
+			lexicon = new Lexicon(STRESS_SENSITIVE_LOOKUP, LEX_TRACE, USE_TRUST,
+					USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
+		}
 
 		System.out.println("Segmenting...");
 		long segTime = System.currentTimeMillis();
 
-		// Create the segmenter
-		Segmenter seg; 
-		if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
-			seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE, segLexicon, counter, 
-					RANDOMIZATION);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_UNIT)) {
-			seg = new UnitSegmenter(segLexicon);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_UTTERANCE)) {
-			seg = new UtteranceSegmenter(segLexicon);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_SUBTRACTIVE)) {
-			seg = new SubtractiveSegmenter(segLexicon);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_GY)) {
-			seg = new GambellYangSegmenter(segLexicon, USE_STRESS);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
-			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD, segLexicon);
-		}
-		else if (SEGMENTER_NAME.equals(SEGMENTER_TROUGH)) {
-			seg = new TPTroughSegmenter(segLexicon);
-			// TODO: Refactor so we don't need this cast. We probably want to make train a method
-			// of all segmenters.
-			TPTroughSegmenter segTrainer = ((TPTroughSegmenter) seg);
-			for (Utterance utterance : segUtterances) {
-				segTrainer.train(utterance, SEG_TRACE);	
+		// Create the segmenter if we're training
+		if (training) {
+			if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
+				seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE, lexicon, counter, 
+						RANDOMIZATION);
 			}
-		}
-		else {
-			throw new RuntimeException("Unknown segmenter specified: " + SEGMENTER_NAME);
+			else if (SEGMENTER_NAME.equals(SEGMENTER_UNIT)) {
+				seg = new UnitSegmenter(lexicon);
+			}
+			else if (SEGMENTER_NAME.equals(SEGMENTER_UTTERANCE)) {
+				seg = new UtteranceSegmenter(lexicon);
+			}
+			else if (SEGMENTER_NAME.equals(SEGMENTER_SUBTRACTIVE)) {
+				seg = new SubtractiveSegmenter(lexicon);
+			}
+			else if (SEGMENTER_NAME.equals(SEGMENTER_GY)) {
+				seg = new GambellYangSegmenter(lexicon, USE_STRESS);
+			}
+			else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
+				seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD, lexicon);
+			}
+			else if (SEGMENTER_NAME.equals(SEGMENTER_TROUGH)) {
+				seg = new TPTroughSegmenter(lexicon);
+			}
+			else {
+				throw new RuntimeException("Unknown segmenter specified: " + SEGMENTER_NAME);
+			}
 		}
 
 		// Segment
 		for (Utterance utterance : segUtterances) {
-			utterance.setBoundaries(seg.segment(utterance, SEG_TRACE));
+			utterance.setBoundaries(seg.segment(utterance, training, SEG_TRACE));
 			if (SEG_TRACE) {
 				System.out.println("Segmentation:" + utterance.getSegText());
 			}
 
-			// Tick the lexicon
-			segLexicon.tick();
+			// Tick the lexicon in training mode
+			if (training) {
+				lexicon.tick();
+			}
 		}
 
 		segTime = System.currentTimeMillis() - segTime;
 		// Output stats
 		System.out.println(seg.getStats());
-		System.out.println("Segmentation took " + segTime / 1000F + " seconds.");
-
-		return segLexicon;
+		System.out.println((training ? "Training" : "Testing") + " took " + segTime / 1000F +
+				" seconds.");
 	}
 
 
@@ -217,6 +221,10 @@ public class Segment {
 	 */
 	public Result[] eval(List<Utterance> goldUtterances, List<Utterance> segUtterances, 
 			Lexicon goldLexicon, Lexicon segLexicon) {
+		if (goldUtterances.size() != segUtterances.size()) {
+			throw new RuntimeException("Different length gold and test utterances.");
+		}
+		
 		System.out.println("Evaluating...");
 		// TODO Refactor logging
 		PrintStream segLog;
@@ -388,33 +396,50 @@ public class Segment {
 				System.exit(1);
 			}
 		}
-		else if (argv.length == 3) {
-			String inputPath = argv[0];
-			String outPath = argv[1];
-			String propsPath = argv[2];
-			callSegmenter(inputPath, outPath, propsPath);
+		else if (argv.length == 4) {
+			String trainPath = argv[0];
+			String testPath = argv[1];
+			String outPath = argv[2];
+			String propsPath = argv[3];
+			callSegmenter(trainPath, testPath, outPath, propsPath);
 		}
 		else {
 			// If we fell through, print usage
-			System.err.println("Usage: Segment input output_base properties_file");
+			System.err.println("Usage: Segment train_file test_file|none output_base properties_file");
 			System.err.println("To generate a properties file with defaults, run:");
 			System.err.println("Segment --dump-defaults");
 			System.exit(64);
 		}
 	}
 
-	public static Result[] callSegmenter(String inputPath, String outPath, String propsPath){
+	public static Result[] callSegmenter(String trainPath, String testPath, String outPath,
+			String propsPath){
 		long startTime = System.currentTimeMillis();
+		
+		// Decide whether we're going to separate test and training data
+		boolean useTestData = testPath.toLowerCase() != NO_TEST_FILE;
 
 		// Load gold utterances and lexicon
 		long loadTime = System.currentTimeMillis();
-		List<Utterance> goldUtterances = Utterance.loadUtterances(inputPath);
-		if (goldUtterances == null) {
-			System.err.println("The input file " + inputPath + " could not be read.");
+		List<Utterance> goldTrainUtterances = Utterance.loadUtterances(trainPath);
+		if (goldTrainUtterances == null) {
+			System.err.println("Could not reading training file " + trainPath);
 			System.exit(1);
 		}
 		loadTime = System.currentTimeMillis() - loadTime;
-		System.out.println("Loading took " + loadTime / 1000F + " seconds.");
+		System.out.println("Loading training data took " + loadTime / 1000F + " seconds.");
+		
+		List<Utterance> goldTestUtterances = null;
+		if (useTestData) { 
+			loadTime = System.currentTimeMillis();
+			goldTestUtterances = Utterance.loadUtterances(testPath);
+			if (goldTrainUtterances == null) {
+				System.err.println("Could not reading testing file " + testPath);
+				System.exit(1);
+			}
+			loadTime = System.currentTimeMillis() - loadTime;
+			System.out.println("Loading testing data took " + loadTime / 1000F + " seconds.");
+		}
 
 		// Load props
 		Properties props = Utils.loadProps(propsPath);
@@ -422,37 +447,51 @@ public class Segment {
 		String segmenterName = props.getProperty(SEGMENTER_PROP);
 		System.out.println("Running segmenter " + segmenterName);
 
-		// Create the gold lexicon
-		Lexicon goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances,
+		// Create the gold lexicons
+		Lexicon goldTrainLexicon = Lexicon.lexiconFromUtterances(goldTrainUtterances,
 				stress_sensitive_lookup);
+		Lexicon goldTestLexicon = null;
+		if (useTestData) {
+			goldTestLexicon = Lexicon.lexiconFromUtterances(goldTrainUtterances,
+					stress_sensitive_lookup);
+		}
 
 		// Segment
-		Result[] evalResults = runSegmenter(goldUtterances, goldLexicon, props, outPath);
+		Result[] evalResults = runSegmenter(goldTrainUtterances, goldTrainLexicon,
+				goldTestUtterances, goldTestLexicon, props, outPath);
 
 		long endTime = System.currentTimeMillis() - startTime;
 		System.out.println("Run took " + endTime / 1000F + " seconds.");
 		return evalResults;
 	}
 
-	public static Result[] runSegmenter(List<Utterance> goldUtterances, Lexicon goldLexicon,
+	public static Result[] runSegmenter(List<Utterance> goldTrainUtterances,
+			Lexicon goldTrainLexicon, List<Utterance> goldTestUtterances, Lexicon goldTestLexicon,
 			Properties props, String outPath) {
+		boolean useTestData = goldTestUtterances != null;
 		Segment seg = new Segment(props, outPath);
 
 		// Copy utterances into segUtterances
 		boolean dropStress = seg.DROP_STRESS;
-		List<Utterance> segUtterances = new LinkedList<Utterance>();
-		for (Utterance utt : goldUtterances) {
-			Utterance segUtt = new Utterance(utt, false);
-			if (dropStress) {
-				segUtt.reduceStresses();
-			}
-			segUtterances.add(segUtt);
+		List<Utterance> segTrainUtterances = Utterance.segUtterances(goldTrainUtterances,
+				dropStress);
+		List<Utterance> segTestUtterances = useTestData ?
+				Utterance.segUtterances(goldTestUtterances, dropStress) : null;
+		
+		// Train and test
+		seg.segment(segTrainUtterances, true);
+		if (useTestData) {
+			seg.segment(segTestUtterances, false);
 		}
-
-		Lexicon segLexicon = seg.segment(segUtterances);
-		// Output eval
-		Result[] evalResults = seg.eval(goldUtterances, segUtterances, goldLexicon, segLexicon);
-		seg.writeOutput(segUtterances, segLexicon);
+		
+		List<Utterance> evalSegUtterances = useTestData ? segTestUtterances : segTrainUtterances;
+		List<Utterance> evalGoldUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
+		
+		// Output eval. It always gets the goldTrainLexicon because the lexicon is only learned
+		// during training.
+		Result[] evalResults = seg.eval(evalGoldUtterances, evalSegUtterances, goldTrainLexicon,
+				seg.lexicon);
+		seg.writeOutput(segTrainUtterances, seg.lexicon);
 
 		return evalResults;
 	}

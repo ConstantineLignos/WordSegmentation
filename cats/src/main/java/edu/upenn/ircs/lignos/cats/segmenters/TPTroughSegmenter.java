@@ -39,7 +39,7 @@ public class TPTroughSegmenter implements Segmenter {
 		syllPairs = new FrequencyDistribution<String>();
 	}
 
-	public void train(Utterance utterance, boolean trace) {
+	private void train(Utterance utterance) {
 		String[] units = utterance.getUnits();
 		int length = units.length;
 		for (int i = 0; i < length - 1; i++) {
@@ -66,7 +66,12 @@ public class TPTroughSegmenter implements Segmenter {
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
+		// Update probabilities if we're training
+		if (training) {
+			train(utterance);
+		}
+		
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		Boolean[] segmentation = utterance.getBoundariesCopy();
@@ -86,8 +91,10 @@ public class TPTroughSegmenter implements Segmenter {
 		}
 		
 		// Increment the words used in the utterance.
-		lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
-				null);
+		if (training) {
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
+					null);
+		}
 		
 		return segmentation;
 	}

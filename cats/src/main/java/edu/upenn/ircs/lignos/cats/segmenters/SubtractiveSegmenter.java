@@ -15,7 +15,7 @@ public class SubtractiveSegmenter implements Segmenter {
 	}
 
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		int baseIndex = 0;
 		while (baseIndex < utterance.length) {
@@ -43,8 +43,10 @@ public class SubtractiveSegmenter implements Segmenter {
 			}
 		}
 		// Increment the words used in the utterance.
-		lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation, 
-				null);
+		if (training) {
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation, 
+					null);
+		}
 
 		return segmentation;
 	}

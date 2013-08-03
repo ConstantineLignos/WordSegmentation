@@ -222,6 +222,25 @@ public class Utterance {
 	
 
 	/**
+	 * Create a copy of gold utterances for segmentation by copying and removing all boundaries.
+	 * @param goldUtterances the gold utterances to copy from
+	 * @param dropStress whether to reduce stress in the copied utterances
+	 * @return a List of Utterances to be used as input to a segmenter
+	 */
+	public static List<Utterance> segUtterances(List<Utterance> goldUtterances,
+			boolean dropStress) {
+		List<Utterance> segUtterances = new LinkedList<Utterance>();
+		for (Utterance utt : goldUtterances) {
+			Utterance segUtt = new Utterance(utt, false);
+			if (dropStress) {
+				segUtt.reduceStresses();
+			}
+			segUtterances.add(segUtt);
+		}
+		return segUtterances;
+	}
+
+	/**
 	 * Return a list of the utterances loaded from the specified path.
 	 * @param path the path to load utterances from
 	 * @return a List of Utterances

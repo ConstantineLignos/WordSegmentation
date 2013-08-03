@@ -38,7 +38,7 @@ public class LTRUSCSegmenter implements Segmenter {
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		Boolean[] segmentation = utterance.getBoundariesCopy();
@@ -55,15 +55,19 @@ public class LTRUSCSegmenter implements Segmenter {
 				segmentation[i] = true;		
 				uscSegs++;
 				// Each time you place a boundary, increment the word in the lexicon
-				lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
-						(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+				if (training) {
+					lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
+							(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+				}
 				seenStress = false;
 			}
 		}
 		
 		// Increment the final word in the lexicon
-		lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
-				(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
+		if (training) {
+			lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
+					(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
+		}
 		
 		return segmentation;
 	}

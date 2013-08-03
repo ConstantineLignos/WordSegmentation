@@ -32,16 +32,21 @@ public class SegExperiment implements Runnable  {
 	}
 
 	public static class SegmenterParams {
-		List<Utterance> goldUtterances;
-		Lexicon goldLexicon;
-		Properties props;
-		String outPath;
-		String name;
+		public final List<Utterance> goldTrainUtterances;
+		public final Lexicon goldTrainLexicon;
+		public final List<Utterance> goldTestUtterances;
+		public final Lexicon goldTestLexicon;
+		public final Properties props;
+		public final String outPath;
+		public final String name;
 
 		public SegmenterParams(List<Utterance> goldUtterances, Lexicon goldLexicon,
+				List<Utterance> goldTestUtterances,	Lexicon goldTestLexicon,
 				Properties props, String outPath, String name) {
-			this.goldUtterances = goldUtterances;
-			this.goldLexicon = goldLexicon;
+			this.goldTrainUtterances = goldUtterances;
+			this.goldTrainLexicon = goldLexicon;
+			this.goldTestUtterances = goldTestUtterances;
+			this.goldTestLexicon = goldTestLexicon;
 			this.props = props;
 			this.outPath = outPath;
 			this.name = name;
@@ -49,9 +54,9 @@ public class SegExperiment implements Runnable  {
 	}
 
 	public void run() {
-		System.out.println("Starting run for " + params.name + "...");
-		Result[] segResults = Segment.runSegmenter(params.goldUtterances, params.goldLexicon,
-				params.props, params.outPath);
+		System.out.println("Starting run for properties" + params.name);
+		Result[] segResults = Segment.runSegmenter(params.goldTrainUtterances, params.goldTrainLexicon,
+				params.goldTestUtterances, params.goldTestLexicon, params.props, params.outPath);
 		// Unpack results
 		Result boundaryResult = segResults[0];
 		Result wordResult = segResults[1];
@@ -77,16 +82,18 @@ public class SegExperiment implements Runnable  {
 	 * @param args Command line arguments
 	 */
 	public static void main(String[] args) {
-		if (args.length != 4) {
-			System.err.println("Usage: SegExperiment input output_base propslist csv_output");
-			System.exit(2);
+		if (args.length != 5) {
+			System.err.println("Usage: SegExperiment train_file test_file|none output_base propslist csv_output");
+			System.exit(64);
 		}
 
 		// Extract arguments
-		String inputPath = args[0];
-		String outBase = args[1];
-		String propsListPath = args[2];
-		String outPath = args[3];
+		String trainPath = args[0];
+		String testPath = args[1];
+		String outBase = args[2];
+		String propsListPath = args[3];
+		String outPath = args[4];
+		boolean useTestData = testPath.toLowerCase() != Segment.NO_TEST_FILE;
 
 		// Read in the names of the props files
 		List<String> propsFiles = new LinkedList<String>();
@@ -103,10 +110,19 @@ public class SegExperiment implements Runnable  {
 		propsScanner.close();
 		
 		// Read in the input
-		List<Utterance> goldUtterances = Utterance.loadUtterances(inputPath);
-		if (goldUtterances == null) {
-			System.err.println("Could not read input file " + inputPath);
+		List<Utterance> goldTrainUtterances = Utterance.loadUtterances(trainPath);
+		if (goldTrainUtterances == null) {
+			System.err.println("Could not read training file " + trainPath);
 			System.exit(1);
+		}
+		
+		List<Utterance> goldTestUtterances = null;
+		if (useTestData) { 
+			goldTestUtterances = Utterance.loadUtterances(testPath);
+			if (goldTrainUtterances == null) {
+				System.err.println("Could not reading testing file " + testPath);
+				System.exit(1);
+			}
 		}
 
 		// Open the output
@@ -138,7 +154,7 @@ public class SegExperiment implements Runnable  {
 			// Because properties can vary in stress sensitive lookup, we have to make the lexicon
 			// for each props
 			boolean stress_sensitive_lookup = new Boolean(props.getProperty(Segment.STRESS_SENSITIVE_PROP));
-			Lexicon goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances,
+			Lexicon goldLexicon = Lexicon.lexiconFromUtterances(goldTrainUtterances,
 					stress_sensitive_lookup);
 
 			// Clean up name
@@ -146,8 +162,8 @@ public class SegExperiment implements Runnable  {
 			if (name.contains(".")) {
 				name = name.substring(0, name.lastIndexOf('.'));
 			}
-			SegmenterParams params = new SegmenterParams(goldUtterances, goldLexicon, props,
-					outBase, name);
+			SegmenterParams params = new SegmenterParams(goldTrainUtterances, goldLexicon, 
+					goldTestUtterances, goldLexicon, props,	outBase, name);
 			pool.submit(new SegExperiment(params, outLines, idx++));
 		}
 

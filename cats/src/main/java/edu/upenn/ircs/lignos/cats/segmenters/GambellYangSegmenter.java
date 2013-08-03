@@ -21,7 +21,7 @@ public class GambellYangSegmenter implements Segmenter {
 	}
 
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		String[] units = utterance.getUnits();
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		Boolean[] stresses = utterance.getStresses();
@@ -44,8 +44,10 @@ public class GambellYangSegmenter implements Segmenter {
 				if (finalBound != segmentation.length) {
 					segmentation[finalBound] = true;
 					// Reward this word
-					lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
-							(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+					if (training) {
+						lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
+								(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+					}
 				}
 				// If we did segment to the end of the utterance, make sure to reward the final
 				// word and the previous word. Note that just hitting the end of the while loop will
@@ -56,11 +58,15 @@ public class GambellYangSegmenter implements Segmenter {
 					// 2. If the base index is unchanged since the last segmentation, the previous
 					//    word was already rewarded when it was segmented.
 					if (baseIndex != 0 && baseIndex != lastSegBaseIndex) {
-						lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
-								(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+						if (training) {
+							lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
+									(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+						}
 					}
-					lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
-							(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
+					if (training) {
+						lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
+								(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
+					}
 				}
 
 				// Move baseIndex by word length
@@ -72,8 +78,10 @@ public class GambellYangSegmenter implements Segmenter {
 					stresses[baseIndex + 1]) {
 				segmentation[baseIndex] = true;
 				// Reward this word
-				lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
-						(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+				if (training) {
+					lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
+							(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+				}
 				uscSegs++;
 				baseIndex++;
 				lastSegBaseIndex = baseIndex;
@@ -86,7 +94,7 @@ public class GambellYangSegmenter implements Segmenter {
 		// If we made no segmentations at all, add the while utterance to the lexicon if there is
 		// one or fewer primary stresses in it or if we're not using stress.
 		if (lastSegBaseIndex == 0) {
-			if (!useStress || Collections.frequency(Arrays.asList(stresses), true) <= 1) { 
+			if (training && (!useStress || Collections.frequency(Arrays.asList(stresses), true) <= 1)) { 
 				lexicon.rewardWord(units, stresses);
 			}
 		}

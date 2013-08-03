@@ -72,9 +72,9 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	 * (if specified). 
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		// Count subsequences
-		if (counter != null) {
+		if (training && counter != null) {
 			counter.incAllSubSeqs(utterance.getUnits());
 		}
 		
@@ -133,10 +133,12 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			
 			// If we're all done, pick the best one
 			if (allDone) {
-				SegResult bestSeg = pickBestSeg(utterance, beam, lexicon, counter, trace);
+				SegResult bestSeg = pickBestSeg(utterance, beam, lexicon, counter, training, trace);
 				// Increment the words used
-				lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
-						bestSeg.segmentation, bestSeg.trusts);
+				if (training) {
+					lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
+							bestSeg.segmentation, bestSeg.trusts);
+				}
 				
 				// Note beam size statistics before we return
 				nUtts++;
@@ -160,7 +162,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 	
 	
 	private SegResult pickBestSeg(Utterance utt, ArrayList<SegResult> beam, 
-			Lexicon lex, SubSeqCounter counter, boolean trace) {
+			Lexicon lex, SubSeqCounter counter, boolean training, boolean trace) {
 		// If the beam size is one, just return the only item
 		if (beam.size() == 1) {
 			return beam.get(0);
@@ -199,7 +201,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		if (beam.size() == 2  && !WIDESEARCH) {
 			Word w = lex.getSplitWord(utt, beam.get(maxScoreIdx).segmentation, 
 					beam.get((maxScoreIdx + 1) % 2).segmentation);
-			if (w != null) {
+			if (training && w != null) {
 				lex.penalizeWord(w);
 			}
 		}

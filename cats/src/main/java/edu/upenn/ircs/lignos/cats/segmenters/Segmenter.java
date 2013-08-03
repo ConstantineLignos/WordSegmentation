@@ -22,7 +22,7 @@ package edu.upenn.ircs.lignos.cats.segmenters;
 import edu.upenn.ircs.lignos.cats.Utterance;
 
 public interface Segmenter {
-	public Boolean[] segment(Utterance utterance, boolean trace);
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace);
 	
 	public String getStats();
 }

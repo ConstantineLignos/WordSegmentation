@@ -43,7 +43,7 @@ public class RandomSegmenter implements Segmenter {
 	 * Segment by marking each possible boundary as a boundary
 	 */
 	@Override
-	public Boolean[] segment(Utterance utterance, boolean trace) {
+	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		// Return all segmentation points as true
 		Boolean[] boundaries = utterance.getBoundariesCopy();
 		
@@ -59,8 +59,10 @@ public class RandomSegmenter implements Segmenter {
 		}
 
 		// Increment the words used in the utterance.
-		lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
-				boundaries, null);
+		if (training) {
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
+					boundaries, null);
+		}
 		
 		return boundaries;
 	}
