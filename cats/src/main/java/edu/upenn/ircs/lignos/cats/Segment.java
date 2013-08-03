@@ -33,7 +33,14 @@ import edu.upenn.ircs.lignos.cats.lexicon.Word;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation.EvalMethod;
 import edu.upenn.ircs.lignos.cats.metrics.Result;
-import edu.upenn.ircs.lignos.cats.segmenters.*;
+import edu.upenn.ircs.lignos.cats.segmenters.BeamSubtractiveSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.GambellYangSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.RandomSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.Segmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.SubtractiveSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.TPTroughSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.UnitSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.UtteranceSegmenter;
 
 public class Segment {
 	// Command line arguments
@@ -70,6 +77,7 @@ public class Segment {
 	private static final String SEGMENTER_SUBTRACTIVE = "Subtractive";
 
 	// Experimental controls
+	// TODO: Consider just making this compile-time as it's pretty much useless
 	public boolean STRESS_SENSITIVE_LOOKUP;
 	public String SEGMENTER_NAME;
 	public boolean DROP_STRESS;
