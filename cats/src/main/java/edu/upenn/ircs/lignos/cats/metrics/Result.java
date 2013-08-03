@@ -26,14 +26,17 @@ public class Result {
 	public final double hitRate;
 	public final double faRate;
 	public final double aPrime;
+	public final double bDoublePrime;
 
-	private Result(double precision, double recall, double fScore, double hitRate, double faRate, double aPrime) {
+	private Result(double precision, double recall, double fScore, double hitRate,
+			double faRate, double aPrime, double bDoublePrime) {
 		this.precision = precision;
 		this.recall = recall;
 		this.fScore = fScore;
 		this.hitRate = hitRate;
 		this.faRate = faRate;
 		this.aPrime = aPrime;
+		this.bDoublePrime = bDoublePrime;
 	}
 
 	public static Result calcResult(int truePositives, int falsePositives,
@@ -44,7 +47,10 @@ public class Result {
 		double hitRate = recall; // HR and recall are the same measurement
 		double faRate = falsePositives / (float) (trueNegatives + falsePositives);
 		double aPrime = .5 + (((hitRate - faRate) * (1 + hitRate - faRate)) / (4 * hitRate * ( 1 - faRate)));
-
+		// B double prime as given by Donaldson (1992):
+		// B"D = [(1 - H)(l - FA) - HFA] / [(1 - H)(l - FA) + HFA]
+		double bDoublePrime = (((1 - hitRate) * (1 - faRate) - (hitRate * faRate)) /
+				((1 - hitRate) * (1 - faRate) + (hitRate * faRate)));
 
 		// Correct for any NaNs by changing to zero
 		precision = Double.isNaN(precision) ? 0.0 : precision;
@@ -52,13 +58,14 @@ public class Result {
 		fScore = Double.isNaN(fScore) ? 0.0 : fScore;
 		aPrime = Double.isNaN(aPrime) || Double.isInfinite(aPrime) ? 0.0 : aPrime;
 
-		Result r = new Result(precision, recall, fScore, hitRate, faRate, aPrime);
+		Result r = new Result(precision, recall, fScore, hitRate, faRate, aPrime, bDoublePrime);
 		return r;
 	}
 
 	public String toString() {
-		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f\nHit Rate: %.4f, FA Rate: %.4f, A': %.4f",
-				precision, recall, fScore, hitRate, faRate, aPrime);
+		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f\nHit Rate: %.4f, " +
+				"FA Rate: %.4f, A': %.4f, B'': %.4f",
+				precision, recall, fScore, hitRate, faRate, aPrime, bDoublePrime);
 	}
 
 	public String toStringPRF() {
@@ -67,7 +74,7 @@ public class Result {
 	}
 
 	public String toCSVString() {
-		return String.format("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f", precision, recall, fScore, hitRate, faRate,
-				aPrime);
+		return String.format("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f", precision, recall, fScore,
+				hitRate, faRate, aPrime, bDoublePrime);
 	}
 }

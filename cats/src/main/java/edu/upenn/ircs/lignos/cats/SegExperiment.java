@@ -70,6 +70,7 @@ public class SegExperiment implements Runnable  {
 				String.format("%1.4f,", boundaryResult.hitRate) +
 				String.format("%1.4f,", boundaryResult.faRate) +
 				String.format("%1.4f,", boundaryResult.aPrime) +
+				String.format("%1.4f,", boundaryResult.bDoublePrime) +
 				String.format("%1.4f,", wordTokenResult.precision) +
 				String.format("%1.4f,", wordTokenResult.recall) +
 				String.format("%1.4f,", wordTokenResult.fScore) +
@@ -174,7 +175,7 @@ public class SegExperiment implements Runnable  {
 		pool.shutdown();
 		try {
 			pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-			out.println("Condition,BP,BR,BF,BH,BFA,BAP,ToP,ToR,ToF,TyP,TyR,TyF,LP,LR,LF");
+			out.println("Condition,BP,BR,BF,BH,BFA,BAP,BBDP,ToP,ToR,ToF,TyP,TyR,TyF,LP,LR,LF");
 			for (String line : outLines) {
 				out.println(line);
 			}
