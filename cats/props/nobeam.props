@@ -1,0 +1,39 @@
+#You must leave all parameters defined when editing this file. Leaving any parameters undefined may result in undefined behavior.
+#Segmenter: Which segmenter to use.
+#Stress_sensitive_lookup: Whether lexicon entries are stress-sensitive. Should be false unless you are changing the lookup functionality.
+#Use_trust: Whether the segmenter is allowed to specify which boundaries are to be trusted when adding words to the lexicon.
+#Drop_stress: Whether adjacent stresses in the input should be reduced to better reflect natural speech patterns.
+#Use_stress: Whether the segmenter is given stress information.
+#Use_prob_mem: Whether recall of words from the lexicon is proabilistic.
+#Prob_mem_amount: Parameter for exponential function for probabilitic lexicon recall.
+#Decay_amount: Amount lexical entries decay after each utterance. Experimental feature. Set to 0.0 to disable decay.
+#Lex_normalization: Whether to normalize scores in the lexicon.
+#Longest: Whether a subtractive segmenter is forced to use the longest words possible in its segmentation.
+#Beam_size: Size of the beam for the beam segmenter. Set to 1 to use greedy search.
+#Random_Seg_Rate: Rate at which the random segmenter places a boundary.
+#Use_randomization: Whether to randomize word subtraction and hypothesis selection.
+#Use_subseqdiscount: Whether to divide words scores by subsequence frequency.
+#Lex_trace: Whether to print debugging information for lexicon stores and lookups
+#Seg_trace: Whether to print debugging information for segmentation.
+#Seg_logging: Whether to write out information about the evaluation of segmentation to a file.
+#Lex_logging: Whether to write out information about the evaluation of the lexicon to a file.
+#
+#Tue Apr 10 19:56:15 EDT 2012
+Lex_normalization=false
+Seg_trace=false
+Decay_amount=0.0
+Prob_mem_amount=0.05
+Use_stress=false
+Random_Seg_Rate=0.5
+Use_randomization=false
+Segmenter=BeamSubtractive
+Use_prob_mem=false
+Beam_size=1
+Drop_stress=true
+Stress_sensitive_lookup=false
+Lex_trace=false
+Use_subseqdiscount=false
+Lex_logging=true
+Use_trust=true
+Seg_logging=true
+Longest=false
