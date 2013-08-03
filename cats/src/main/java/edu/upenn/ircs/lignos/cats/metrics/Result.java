@@ -57,17 +57,17 @@ public class Result {
 	}
 	
 	public String toString() {
-		return String.format("Precision: %4f, Recall: %4f, F-Score: %4f\nHit Rate: %.4f, FA Rate: %.4f, A': %.4f",
+		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f\nHit Rate: %.4f, FA Rate: %.4f, A': %.4f",
 				precision, recall, fScore, hitRate, faRate, aPrime);
 	}
 	
 	public String toStringPRF() {
-		return String.format("Precision: %4f, Recall: %4f, F-Score: %4f",
+		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f",
 				precision, recall, fScore, hitRate, faRate, aPrime);
 	}
 	
 	public String toCSVString() {
-		return String.format("%4f,%4f,%4f,%4f,%4f,%4f", precision, recall, fScore, hitRate, faRate,
+		return String.format("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f", precision, recall, fScore, hitRate, faRate,
 				aPrime);
 	}
 }
