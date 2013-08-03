@@ -282,13 +282,24 @@ public class Segment {
 		System.out.println("Boundaries:");
 		System.out.println(boundaryResult);
 
-		Result wordResult = Evaluation.evalUtterances(goldEvalUtterances, segEvalUtterances,
+		// Word tokens
+		Result wordTokensResults = Evaluation.evalUtterances(goldEvalUtterances, segEvalUtterances,
 				segLog, wordLog, EvalMethod.WORDS);
-		System.out.println("Words:");
-		System.out.println(wordResult);
+		System.out.println("Words tokens:");
+		System.out.println(wordTokensResults);
+
+		// Word types
+		Lexicon goldEvalLexicon = Lexicon.lexiconFromUtterances(goldEvalUtterances,
+				goldTrainLexicon.stressSensitive);
+		Lexicon segEvalLexicon = Lexicon.lexiconFromUtterances(segEvalUtterances,
+				goldTrainLexicon.stressSensitive);
+		System.out.println("Word types:");
+		Result wordTypesResult = Evaluation.evalLexicons(goldEvalLexicon, segEvalLexicon, null, false);
+		System.out.println(wordTypesResult.toStringPRF());
 
 		System.out.println("Lexicon:");
-		Result lexResult = Evaluation.evalLexicons(goldTrainLexicon, segTrainLexicon, lexLog);
+		Result lexResult = Evaluation.evalLexicons(goldTrainLexicon, segTrainLexicon, lexLog, true);
+		System.out.println(lexResult.toStringPRF());
 
 		// Close any open logs
 		if (segLog != null) segLog.close();
@@ -296,9 +307,7 @@ public class Segment {
 		if (wordLog != null) wordLog.close();
 		if (lexLog != null) lexLog.close();
 
-		System.out.println(lexResult.toStringPRF());
-		System.out.println("Done evaluating.");
-		return new Result[] {boundaryResult, wordResult, lexResult};
+		return new Result[] {boundaryResult, wordTokensResults, wordTypesResult, lexResult};
 	}
 
 

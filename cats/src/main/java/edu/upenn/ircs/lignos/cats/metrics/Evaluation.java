@@ -232,9 +232,11 @@ public class Evaluation {
 	 * Compute precision, recall, and f-score over lexicon entries.
 	 * @param goldLex the lexicon built from the gold standard utterances
 	 * @param segLex the lexicon being tested
+	 * @param printStressInfo whether to print information about stress patterns in the lexicon
 	 * @return the precision, recall, and f-score for the tested segmentation
 	 */
-	public static Result evalLexicons(Lexicon goldLex, Lexicon segLex, PrintStream log) {
+	public static Result evalLexicons(Lexicon goldLex, Lexicon segLex, PrintStream log,
+			boolean printStressInfo) {
 		int truePositives = 0;
 		int falsePositives = 0;
 		int falseNegatives = 0;
@@ -273,9 +275,11 @@ public class Evaluation {
 		}
 
 		// Print the stress information and reset it
-		System.out.println("Learner's lexicon stress-initial rate: " +
-				(initialStressWords / (float) numStressWords) +
-				" (" + initialStressWords + "/" + numStressWords + " total)");
+		if (printStressInfo) {
+			System.out.println("Learner's lexicon stress-initial rate: " +
+					(initialStressWords / (float) numStressWords) +
+					" (" + initialStressWords + "/" + numStressWords + " total)");
+		}
 		numStressWords = 0;
 		initialStressWords = 0;
 
@@ -301,9 +305,11 @@ public class Evaluation {
 		}
 
 		// Print the stress information for gold
-		System.out.println("Gold lexicon stress-initial rate: " +
-				(initialStressWords / (float) numStressWords) +
-				" (" + initialStressWords + "/" + numStressWords + " total)");
+		if (printStressInfo) {
+			System.out.println("Gold lexicon stress-initial rate: " +
+					(initialStressWords / (float) numStressWords) +
+					" (" + initialStressWords + "/" + numStressWords + " total)");
+		}
 
 		return Result.calcResult(truePositives, falsePositives, falseNegatives, trueNegatives);
 	}

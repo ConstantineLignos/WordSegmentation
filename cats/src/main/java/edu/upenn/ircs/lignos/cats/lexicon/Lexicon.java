@@ -42,7 +42,7 @@ public class Lexicon {
 	private static final double UNKNOWN_WORD_SCORE = .5;
 	private static final double SMOOTHING_MIN = 1.0;
 
-	private final boolean stressSensitive;
+	public final boolean stressSensitive;
 	private final boolean trace;
 	private final boolean useTrust;
 	private final boolean useProbMem;

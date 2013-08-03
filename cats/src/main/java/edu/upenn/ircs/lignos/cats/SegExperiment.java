@@ -59,8 +59,9 @@ public class SegExperiment implements Runnable  {
 				params.goldTestUtterances, params.goldTestLexicon, params.props, params.outPath);
 		// Unpack results
 		Result boundaryResult = segResults[0];
-		Result wordResult = segResults[1];
-		Result lexResult = segResults[2];
+		Result wordTokenResult = segResults[1];
+		Result wordTypeResult = segResults[2];
+		Result lexResult = segResults[3];
 		// Format output
 		results[resultsIndex] = (params.name + "," +
 				String.format("%1.4f,", boundaryResult.precision) +
@@ -69,9 +70,12 @@ public class SegExperiment implements Runnable  {
 				String.format("%1.4f,", boundaryResult.hitRate) +
 				String.format("%1.4f,", boundaryResult.faRate) +
 				String.format("%1.4f,", boundaryResult.aPrime) +
-				String.format("%1.4f,", wordResult.precision) +
-				String.format("%1.4f,", wordResult.recall) +
-				String.format("%1.4f,", wordResult.fScore) +
+				String.format("%1.4f,", wordTokenResult.precision) +
+				String.format("%1.4f,", wordTokenResult.recall) +
+				String.format("%1.4f,", wordTokenResult.fScore) +
+				String.format("%1.4f,", wordTypeResult.precision) +
+				String.format("%1.4f,", wordTypeResult.recall) +
+				String.format("%1.4f,", wordTypeResult.fScore) +
 				String.format("%1.4f,", lexResult.precision) +
 				String.format("%1.4f,", lexResult.recall) +
 				String.format("%1.4f", lexResult.fScore));
@@ -170,7 +174,7 @@ public class SegExperiment implements Runnable  {
 		pool.shutdown();
 		try {
 			pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-			out.println("Condition,BP,BR,BF,BH,BFA,BAP,WP,WR,WF,LP,LR,LF");
+			out.println("Condition,BP,BR,BF,BH,BFA,BAP,ToP,ToR,ToF,TyP,TyR,TyF,LP,LR,LF");
 			for (String line : outLines) {
 				out.println(line);
 			}
