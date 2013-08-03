@@ -266,7 +266,7 @@ public class Segment {
 
 		// TODO Close logs properly
 
-		System.out.println(lexResult);
+		System.out.println(lexResult.toStringPRF());
 		System.out.println("Done evaluating.");
 		return new Result[] {boundaryResult, wordResult, lexResult};
 	}
