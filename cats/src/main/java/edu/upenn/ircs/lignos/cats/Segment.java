@@ -427,7 +427,7 @@ public class Segment {
 		long startTime = System.currentTimeMillis();
 
 		// Decide whether we're going to separate test and training data
-		boolean useTestData = testPath.toLowerCase() != NO_TEST_FILE;
+		boolean useTestData = !NO_TEST_FILE.equals(testPath.toLowerCase());
 
 		// Load gold utterances and lexicon
 		long loadTime = System.currentTimeMillis();
