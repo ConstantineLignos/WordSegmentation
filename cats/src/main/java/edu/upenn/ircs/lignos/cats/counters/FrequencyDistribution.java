@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -75,9 +75,9 @@ public class FrequencyDistribution<K> {
 	 * @return the frequency of the specified event
 	 */
 	public double getFreq(K event) {
-		return (total > 0) ? counts.get(event) / (float) total : 0.0; 
+		return (total > 0) ? counts.get(event) / (float) total : 0.0;
 	}
-	
+
 	/**
 	 * Returns the total count of all events recorded, the sum of the counts of each event.
 	 * @return the total count of all events
@@ -85,7 +85,7 @@ public class FrequencyDistribution<K> {
 	public long getTotal() {
 		return total;
 	}
-	
+
 	/**
 	 * Return the number of unique events recorded.
 	 * @return the number of unique events

@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,47 +29,47 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 import edu.upenn.ircs.lignos.cats.lexicon.Word;
 
 /**
- * A segmenter that uses a beam search to apply the USC left-to-right and 
+ * A segmenter that uses a beam search to apply the USC left-to-right and
  * subtracts known words from the utterance.
  */
 public class BeamSubtractiveSegmenter implements Segmenter {
 	// These constants are for experimental features. Turn them on at your peril.
 	private final static boolean WIDESEARCH = false;
-	
+
 	private boolean longest;
 	private boolean useUSC;
 	private boolean randomize;
 	private int beamSize;
 	private ArrayList<SegResult> beam;
 	private ArrayList<SegResult> candidates;
-	
+
 	private int nUtts = 0;
 	private int totalHighestBeamSize = 0;
-	
+
 	private int uscSegs = 0;
 	private int subtractionSegs = 0;
 	private Lexicon lexicon;
 	private SubSeqCounter counter;
 
-	
-	public BeamSubtractiveSegmenter(boolean longest, boolean useUSC, int beamSize, Lexicon lexicon, 
+
+	public BeamSubtractiveSegmenter(boolean longest, boolean useUSC, int beamSize, Lexicon lexicon,
 			SubSeqCounter counter, boolean randomize) {
 		this.beamSize = beamSize;
 		this.useUSC = useUSC;
 		this.lexicon = lexicon;
 		this.counter = counter;
 		this.randomize = randomize;
-		
+
 		// Create the beams. These are reused each time for efficiency
 		beam = new ArrayList<SegResult>(beamSize);
 		candidates = new ArrayList<SegResult>(beamSize * 2);
 	}
-	
-	
-	/* 
-	 * Segment by subtracting known words from the utterance and using the 
-	 * Unique Stress Constraint to limit the amount of stress per word 
-	 * (if specified). 
+
+
+	/*
+	 * Segment by subtracting known words from the utterance and using the
+	 * Unique Stress Constraint to limit the amount of stress per word
+	 * (if specified).
 	 */
 	@Override
 	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
@@ -77,7 +77,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		if (training && counter != null) {
 			counter.incAllSubSeqs(utterance.getUnits());
 		}
-		
+
 		// Get the initial segmentation for the utterance
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		// Clear beam and candidates, seed the beam
@@ -85,10 +85,10 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		candidates.clear();
 		// Create an empty seg result with false trusts for each boundary
 		beam.add(new SegResult(segmentation, 0, false, new boolean[utterance.length - 1]));
-		
+
 		// Track the maximum beam size
 		int highestBeamSize = 0;
-		
+
 		// TODO: Small inefficiency in the beam search: it's possible to have two identical
 		// candidates in the beam where one comes from doing no work, and the other comes
 		// from subtracting a single word that's the length of the whole utterance.
@@ -110,18 +110,18 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 				else {
 					// Otherwise, note that we are not all done and advance
 					allDone = false;
-					
+
 					// Set the beam lock if the beam is full
 					boolean beamLock = beam.size() == beamSize;
-					SegResult[] results = extendSeg(utterance, lexicon, 
+					SegResult[] results = extendSeg(utterance, lexicon,
 							currResult, trace, beamLock);
 					// Depending on the full beam behavior, either keep the top
-					// result or add all to candidates 
+					// result or add all to candidates
 					for (SegResult result : results)
 						candidates.add(result);
 				}
 			}
-			// Clear the beam and copy the candidates to it 
+			// Clear the beam and copy the candidates to it
 			beam.clear();
 			if (candidates.size() <= beamSize) {
 				beam.addAll(candidates);
@@ -130,26 +130,26 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 				pruneBeam(beam, candidates);
 			}
 			candidates.clear();
-			
+
 			// If we're all done, pick the best one
 			if (allDone) {
 				SegResult bestSeg = pickBestSeg(utterance, beam, lexicon, counter, training, trace);
 				// Increment the words used
 				if (training) {
-					lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
+					lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(),
 							bestSeg.segmentation, bestSeg.trusts);
 				}
-				
+
 				// Note beam size statistics before we return
 				nUtts++;
 				totalHighestBeamSize += highestBeamSize;
-				
+
 				return bestSeg.segmentation;
 			}
 		}
 	}
-	
-	
+
+
 	private void pruneBeam(ArrayList<SegResult> beam,
 			ArrayList<SegResult> candidates) {
 		// TODO Implement pruning properly
@@ -159,15 +159,15 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			}
 		}
 	}
-	
-	
-	private SegResult pickBestSeg(Utterance utt, ArrayList<SegResult> beam, 
+
+
+	private SegResult pickBestSeg(Utterance utt, ArrayList<SegResult> beam,
 			Lexicon lex, SubSeqCounter counter, boolean training, boolean trace) {
 		// If the beam size is one, just return the only item
 		if (beam.size() == 1) {
 			return beam.get(0);
 		}
-		
+
 		if (trace) System.out.println("Choosing from beam of size " + beam.size());
 
 		// Pick the one with the highest score
@@ -175,72 +175,72 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 		int maxScoreIdx = -1;
 		double[] beamScores = new double[beam.size()];
 		for (int i = 0; i < beam.size(); i++) {
-			double scores[] = lex.utteranceWordsScores(utt.getUnits(), 
+			double scores[] = lex.utteranceWordsScores(utt.getUnits(),
 					utt.getStresses(), beam.get(i).segmentation, counter);
 			// TODO: Make other ways of  scoring an option
 			double segScore =  SegUtil.geometricMean(scores);
-			if (trace) System.out.println(Utterance.makeSegText(utt.getUnits(), 
-					utt.getStresses(), beam.get(i).segmentation) +  " score: " + 
+			if (trace) System.out.println(Utterance.makeSegText(utt.getUnits(),
+					utt.getStresses(), beam.get(i).segmentation) +  " score: " +
 					segScore);
-			
+
 			beamScores[i] = segScore;
 			if (segScore > maxScore) {
 				maxScore = segScore;
 				maxScoreIdx = i;
 			}
 		}
-		
+
 		if (randomize) {
 			// Rather than choosing the best score, sample among the best scores
 			maxScoreIdx = SegUtil.sampleScores(beamScores);
 		}
-		
+
 		if (trace) System.out.println("Chose " + maxScoreIdx);
-		
+
 		// If the beam size is two and wide search is off, blame the losing word
 		if (beam.size() == 2  && !WIDESEARCH) {
-			Word w = lex.getSplitWord(utt, beam.get(maxScoreIdx).segmentation, 
+			Word w = lex.getSplitWord(utt, beam.get(maxScoreIdx).segmentation,
 					beam.get((maxScoreIdx + 1) % 2).segmentation);
 			if (training && w != null) {
 				lex.penalizeWord(w);
 			}
 		}
-			
-			
+
+
 		return beam.get(maxScoreIdx);
 	}
 
 
-	public SegResult[] extendSeg(Utterance utterance, Lexicon lexicon, 
+	public SegResult[] extendSeg(Utterance utterance, Lexicon lexicon,
 			SegResult baseResult, boolean trace, boolean beamLock) {
 		// We keep a main segmentation for USC or no seg where the
 		// beam does not split and we recycle the original segResult.
 		Boolean[] baseSegmentation = baseResult.segmentation;
 		boolean[] baseTrusts = baseResult.trusts;
 		int baseIndex = baseResult.index;
-		
+
 		// Additional pairs of segmentations and indices go here
 		LinkedList<SegResult> otherResults = null;
-		
-		// A default segmentation to be used for a wider search or if we 
+
+		// A default segmentation to be used for a wider search or if we
 		// don't segment
 		SegResult defaultSeg = null;
-		
+
 		Boolean[] stresses = utterance.getStresses();
-		boolean seenStress = baseResult.seenStress;		
-		
+		boolean seenStress = baseResult.seenStress;
+
 		// Set the flag if this unit is stressed
 		if (stresses[baseIndex]) seenStress = true;
-		
+
 		// If WIDESEARCH is on, always make the default segmentation
 		if (WIDESEARCH) {
-			defaultSeg = new SegResult(baseSegmentation, 
+			defaultSeg = new SegResult(baseSegmentation,
 					baseIndex + 1, seenStress, baseTrusts);
 		}
-		
+
 		// Try stress-based segmentation first if we have room to look ahead
 		// and it's enabled, then try other techniques
-		if (baseIndex < utterance.length - 1 && useUSC && seenStress && 
+		if (baseIndex < utterance.length - 1 && useUSC && seenStress &&
 				stresses[baseIndex + 1]) {
 			// Add a segmentation point after the current unit. Since
 			// boundaries are offset from units by one, this means the
@@ -251,12 +251,12 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			uscSegs += 1;
 			seenStress = false;
 			baseIndex++; // Move forward just one unit
-			
+
 			// Update the segmentation
-			SegResult.recycleSegResult(baseSegmentation, baseIndex, seenStress, 
+			SegResult.recycleSegResult(baseSegmentation, baseIndex, seenStress,
 					baseTrusts, baseResult);
 		}
-		else {			
+		else {
 			// Try to subtract a word starting at this position
 			ArrayList<Word> prefixes = lexicon.getPrefixWords(utterance, baseIndex);
 			if (!prefixes.isEmpty()) {
@@ -275,31 +275,31 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 								SegUtil.chooseBestScoreWord(prefixes, lexicon, counter);
 						}
 					}
-					
-					if (first && !beamLock && trace && prefixes.size() > 1) 
+
+					if (first && !beamLock && trace && prefixes.size() > 1)
 						System.out.println("Beam split of size " + prefixes.size());
 					if (trace) System.out.println("Subtracting " + w + " " + lexicon.getScore(w, counter));
-					
+
 					// Only count the subtraction once
 					if (first) subtractionSegs += 1;
-					
-					// Copy the base index and modification so we have a fresh 
+
+					// Copy the base index and modification so we have a fresh
 					// copy each time
 					int index = baseIndex;
-					Boolean[] segmentation = 
+					Boolean[] segmentation =
 						Arrays.copyOf(baseSegmentation, baseSegmentation.length);
-					boolean[] trusts = 
+					boolean[] trusts =
 						Arrays.copyOf(baseTrusts, baseTrusts.length);
 
 					// Place the initial boundary of the word if that boundary
 					// is not the start of the utterance
 					if (baseIndex > 0) {
-						// Since boundary i corresponds to a boundary just after 
+						// Since boundary i corresponds to a boundary just after
 						// unit i, subtract by 1 to go before it
 						segmentation[baseIndex - 1] = true;
 						// Don't update trusts, since we don't trust this word
 					}
-					
+
 					// Get the final boundary for the word, again adjusting by 1
 					int finalBound = baseIndex + w.length - 1;
 					// If the final boundary is at too high an index, either
@@ -308,7 +308,7 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 						// There's no boundary to insert, do nothing here and fall
 						// through to adjusting i
 					}
-					else if (finalBound > segmentation.length) 
+					else if (finalBound > segmentation.length)
 						throw new RuntimeException("Tried to subtract a word longer " +
 								"than the remaining utterance.");
 					else {
@@ -319,15 +319,15 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 						seenStress = false;
 						// Fall through to adjust i
 					}
-					
+
 					// Adjust index to the length of the word used
 					index += w.length;
-					
+
 					// Now, store the result appropriately based on whether
 					// we are first or not
 					if (first) {
 						// Recycle baseResult
-						SegResult.recycleSegResult(segmentation, index, 
+						SegResult.recycleSegResult(segmentation, index,
 								seenStress, trusts, baseResult);
 						// If the beam is locked, break here
 						if (beamLock) {
@@ -337,11 +337,11 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 						first = false;
 					}
 					else {
-						// Allocate result list if needed					
+						// Allocate result list if needed
 						if (otherResults == null) {
 							otherResults = new LinkedList<SegResult>();
 						}
-						otherResults.add(new SegResult(segmentation, 
+						otherResults.add(new SegResult(segmentation,
 								index, seenStress, trusts));
 					}
 				}
@@ -350,17 +350,17 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 				// If we get here, there was no segmentation to be done.
 				// Recycle the base result with the index moved ahead,
 				// and null out the default result so we don't have two
-				SegResult.recycleSegResult(baseSegmentation, baseIndex + 1, 
+				SegResult.recycleSegResult(baseSegmentation, baseIndex + 1,
 						seenStress, baseTrusts, baseResult);
 				defaultSeg = null;
 			}
 		}
-		
+
 		// Null out the default result if it's the same as the base
 		if (defaultSeg != null && Arrays.equals(defaultSeg.segmentation, baseResult.segmentation)) {
 			defaultSeg = null;
 		}
-		
+
 		// If there's just one result, we will have never created otherResults
 		if (otherResults == null) {
 			// Just retain the main result, which will always have been updated,
@@ -373,28 +373,28 @@ public class BeamSubtractiveSegmenter implements Segmenter {
 			}
 		}
 		else {
-			// Otherwise, build up the results			
+			// Otherwise, build up the results
 			// Keep track of whether to add in the default result
 			int offset = defaultSeg == null ? 1 : 2;
-			
+
 			SegResult[] results = new SegResult[otherResults.size() + offset];
 			// First result is always the recycled one
 			results[0] = baseResult;
-			
+
 			// Add the default if there is one in the second spot
 			if (defaultSeg != null) {
 				results[1] = defaultSeg;
 			}
-			
+
 			for (int i = offset; i < results.length; i++) {
 				results[i] = otherResults.pop();
 			}
-			
+
 			return results;
 		}
 	}
-	
-	
+
+
 	@Override
 	public String getStats() {
 		float averageBeam = totalHighestBeamSize / (float) nUtts;

@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -40,7 +40,7 @@ public class SimpleCounterTest extends TestCase{
 		SimpleCounter c = new SimpleCounter();
 		assertEquals(0, c.get(word));
 	}
-	
+
 	/**
 	 * Incrementing should increment.
 	 */
@@ -53,7 +53,7 @@ public class SimpleCounterTest extends TestCase{
 		c.inc(word);
 		assertEquals(3, c.get(word));
 	}
-	
+
 	/**
 	 * Unseen subsequences should have zero count.
 	 */
@@ -61,7 +61,7 @@ public class SimpleCounterTest extends TestCase{
 		SubSeqCounter c = new SubSeqCounter();
 		assertEquals(0, c.get(iLikePie));
 	}
-	
+
 	/**
 	 * Incrementing subsequences should increment them.
 	 */
@@ -74,7 +74,7 @@ public class SimpleCounterTest extends TestCase{
 		c.inc(iLikePie);
 		assertEquals(3, c.get(iLikePie));
 	}
-	
+
 	/**
 	 * Test that two string combinations with different boundaries are stored separately.
 	 */
@@ -88,7 +88,7 @@ public class SimpleCounterTest extends TestCase{
 		assertEquals(1, c.get(iLikePie));
 
 	}
-	
+
 	/**
 	 * Incrementing all subsequences, length 1.
 	 */
@@ -99,7 +99,7 @@ public class SimpleCounterTest extends TestCase{
 		c.incAllSubSeqs(i);
 		assertEquals(2, c.get(i));
 	}
-	
+
 	/**
 	 * Incrementing all subsequences, length 2.
 	 */
@@ -109,13 +109,13 @@ public class SimpleCounterTest extends TestCase{
 		assertEquals(1, c.get(i));
 		assertEquals(1, c.get(like));
 		assertEquals(1, c.get(iLike));
-		
+
 		c.incAllSubSeqs(iLike);
 		assertEquals(2, c.get(i));
 		assertEquals(2, c.get(like));
 		assertEquals(2, c.get(iLike));
 	}
-	
+
 	/**
 	 * Incrementing all subsequences, length 3.
 	 */

@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class Utterance {
 	private static final Pattern primaryStressPattern = Pattern.compile("(.*)1(.*)");
 	private static final Pattern anyStressPattern = Pattern.compile("\\d");
-	
+
 	// We use primitive arrays where possible, but since units and stresses
 	// should be able to be easily sliced, we have to use Boolean
 	private Boolean[] boundaries;
@@ -43,28 +43,28 @@ public class Utterance {
 	private Boolean[] stresses;
 	private String prettyString;
 	public final int length;
-	
+
 	// Pattern for finding boundaries
 	public final static char WORD_BOUNDARY = ' ';
 	public final static char SYLL_BOUNDARY = '|';
-	
+
 	/**
 	 * Create an utterance from text, noting whether we should use gold standard
 	 * information or not.
 	 * @param text Text of the utterance
 	 * @param reduceStress Whether stress should be reduced
-	 * @param possBoundaries Possible segmentation points. If 
+	 * @param possBoundaries Possible segmentation points. If
 	 */
 	public Utterance(String text, boolean gold, boolean reduceStress){
 		// Parse the word boundaries and set length
 		parseWordBoundaries(text, gold);
 		length = units.length;
-	
+
 		// Reduce stress if needed
-		if (reduceStress) 
+		if (reduceStress)
 			reduceStresses();
 	}
-	
+
 	/**
 	 * Create an utterance from given boundaries and units
 	 * @param units Units of the utterance
@@ -77,12 +77,12 @@ public class Utterance {
 		this.boundaries = boundaries;
 		length = units.length;
 	}
-	
+
 	/**
-	 * Create an utterance by copying fields from the specified utterance, copying boundaries if 
+	 * Create an utterance by copying fields from the specified utterance, copying boundaries if
 	 * specified.
 	 * @param utt the utterance to copy from
-	 * @param copyBoundaries whether to copy boundaries over  
+	 * @param copyBoundaries whether to copy boundaries over
 	 */
 	public Utterance(Utterance utt, boolean copyBoundaries){
 		units = Arrays.copyOf(utt.units, utt.units.length);
@@ -97,7 +97,7 @@ public class Utterance {
 		length = units.length;
 	}
 
-	
+
 	/**
 	 * Reduce the stresses in the utterance
 	 */
@@ -125,16 +125,16 @@ public class Utterance {
 	public Boolean[] getBoundariesCopy() {
 		return Arrays.copyOf(boundaries, boundaries.length);
 	}
-	
-	
+
+
 	/**
-	 * @return the units that make up the utterance. 
+	 * @return the units that make up the utterance.
 	 */
 	public String[] getUnits() {
 		return units;
 	}
 
-	
+
 	/**
 	 * @return the stress of the units that make up the utterance.
 	 */
@@ -176,7 +176,7 @@ public class Utterance {
 				if (unitStart == -1) {
 					continue;
 				}
-				
+
 				// Add the new unit
 				String unit = text.substring(unitStart, idx);
 				unitList.add(anyStressPattern.matcher(unit).replaceAll(""));
@@ -184,7 +184,7 @@ public class Utterance {
 
 				// Place a boundary if we're gold and this was a word boundary
 				boundaryList.add(gold && c == WORD_BOUNDARY);
-				
+
 				// Reset unit start
 				unitStart = -1;
 			}
@@ -194,21 +194,21 @@ public class Utterance {
 					unitStart = idx;
 				}
 			}
-			
+
 		}
-		
+
 		// Put in whatever's left. This code is repeated from above; for optimization
 		// these were not refactored out
 		String unit = text.substring(unitStart, idx);
 		unitList.add(anyStressPattern.matcher(unit).replaceAll(""));
-		stressList.add(primaryStressPattern.matcher(unit).matches());	
+		stressList.add(primaryStressPattern.matcher(unit).matches());
 
 		// Convert into arrays for fast access later.
 		boundaries = boundaryList.toArray(new Boolean[boundaryList.size()]);
 		units = unitList.toArray(new String[unitList.size()]);
 		stresses = stressList.toArray(new Boolean[stressList.size()]);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -219,7 +219,7 @@ public class Utterance {
 		}
 		return prettyString;
 	}
-	
+
 
 	/**
 	 * Create a copy of gold utterances for segmentation by copying and removing all boundaries.
@@ -274,7 +274,7 @@ public class Utterance {
 					throw new FileNotFoundException();
 				}
 			}
-		} 
+		}
 		catch (FileNotFoundException e) {
 			return null;
 		}
@@ -292,10 +292,10 @@ public class Utterance {
 	 * @param segmentation the segmentation used in the utterance
 	 * @return the text representing the segmented version of the utterance
 	 */
-	public static String makeSegText(String[] units, Boolean[] stresses, 
+	public static String makeSegText(String[] units, Boolean[] stresses,
 			Boolean[] segmentation) {
 		StringBuilder out = new StringBuilder();
-		// Connect all but the last unit with the right connection, then add on 
+		// Connect all but the last unit with the right connection, then add on
 		// the final one
 		for (int i=0; i < units.length - 1; i++) {
 			out.append(units[i]);
@@ -305,8 +305,8 @@ public class Utterance {
 		// Stick on final unit and stress
 		out.append(units[units.length - 1]);
 		if (stresses[units.length - 1]) out.append("(1)");
-		
+
 		return out.toString();
 	}
-	
+
 }

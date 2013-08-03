@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,18 +24,18 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 
 
 /**
- * A segmenter that segments by placing boundaries between adjacent strongly 
+ * A segmenter that segments by placing boundaries between adjacent strongly
  * stressed units.
  */
 public class AdjacentStressSegmenter implements Segmenter {
 	private int uscSegs = 0;
 	private Lexicon lexicon;
-	
+
 	public AdjacentStressSegmenter(Lexicon lexicon) {
 		this.lexicon = lexicon;
 	}
 
-	/* 
+	/*
 	 * Segment by placing boundaries between adjacent strong stresses.
 	 */
 	@Override
@@ -45,7 +45,7 @@ public class AdjacentStressSegmenter implements Segmenter {
 		String[] units = utterance.getUnits();
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		Boolean[] stresses = utterance.getStresses();
-		
+
 		// Go through the n-1 words of the utterance, placing a boundary
 		// where there are two sequential stresses
 		for (int i = 0; i < units.length - 1; i++) {
@@ -54,16 +54,16 @@ public class AdjacentStressSegmenter implements Segmenter {
 				uscSegs++;
 			}
 		}
-		
+
 		// Increment the words used
 		if (training) {
-			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation, 
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
 					null);
 		}
-		
+
 		return segmentation;
 	}
-	
+
 	public String getStats() {
 		return "USC segs: " + uscSegs;
 	}

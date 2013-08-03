@@ -90,11 +90,11 @@ public class GambellYangSegmenter implements Segmenter {
 				baseIndex++;
 			}
 		}
-		
+
 		// If we made no segmentations at all, add the while utterance to the lexicon if there is
 		// one or fewer primary stresses in it or if we're not using stress.
 		if (lastSegBaseIndex == 0) {
-			if (training && (!useStress || Collections.frequency(Arrays.asList(stresses), true) <= 1)) { 
+			if (training && (!useStress || Collections.frequency(Arrays.asList(stresses), true) <= 1)) {
 				lexicon.rewardWord(units, stresses);
 			}
 		}

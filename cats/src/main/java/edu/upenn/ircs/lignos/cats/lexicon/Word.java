@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,7 +30,7 @@ public class Word {
 	// Set by the lexicon to determine the decay computed
 	private static boolean decay;
 	private static double decayAmt;
-	
+
 	public final String[] units;
 	public final Boolean[] stresses;
 	private String prettyString;
@@ -39,7 +39,7 @@ public class Word {
 	public long timestamp;
 	private int[] observedStresses;
 	private int observedStressCount;
-	
+
 
 	/**
 	 * Create a new word with score zero with the given units and stresses.
@@ -56,8 +56,8 @@ public class Word {
 		Arrays.fill(this.observedStresses, 0);
 		this.observedStressCount = 0;
 	}
-	
-	
+
+
 	/**
 	 * Create a new word with the given initial score and units and stresses.
 	 * @param units the units that make up the word
@@ -75,8 +75,8 @@ public class Word {
 		Arrays.fill(this.observedStresses, 0);
 		this.observedStressCount = 0;
 	}
-	
-	
+
+
 	/**
 	 * Set whether or not decay is being used and the constant to use when
 	 * calculating decay.
@@ -87,8 +87,8 @@ public class Word {
 		Word.decay = decay;
 		Word.decayAmt = decayAmt;
 	}
-	
-	
+
+
 	/**
 	 * Increment the score of the word. This is protected to prevent
 	 * segmenters from calling it directly; they should call the appropriate
@@ -98,8 +98,8 @@ public class Word {
 		score++;
 		this.timestamp = timestamp;
 	}
-	
-	
+
+
 	/**
 	 * Increment the score of the word by the given amount. This is protected to prevent
 	 * segmenters from calling it directly; they should call the appropriate
@@ -110,8 +110,8 @@ public class Word {
 		score += amount;
 		this.timestamp = timestamp;
 	}
-	
-	
+
+
 	/**
 	 * Decrement the score of the word by the given amount. This is protected to prevent
 	 * segmenters from calling it directly; they should call the appropriate
@@ -119,8 +119,8 @@ public class Word {
 	 * @param amount amount to decrement the count
 	 */
 	protected void decrement(double amount) {score -= amount;}
-	
-	
+
+
 	/**
 	 * Return the score of the word. If decay is in use, this is relative to the
 	 * current time.
@@ -130,8 +130,8 @@ public class Word {
 	protected double getScore(long timestamp) {
 		return decay ? decayScore(timestamp - this.timestamp, score) : score;
 	}
-	
-	
+
+
 	/**
 	 * Compute the decay function for the given elapsed time and raw score.
 	 * @param elapsedTime the time elapsed
@@ -142,13 +142,13 @@ public class Word {
 		return rawScore * Math.exp(-elapsedTime * decayAmt);
 	}
 
-	
+
 	/**
 	 * @return the Word's raw score, not adjusted for the current time
 	 */
 	protected double getRawScore() {return score;}
-	
-	
+
+
 	/**
 	 * @return the timestamp
 	 */
@@ -161,37 +161,37 @@ public class Word {
 	 * @return a string representation of the word
 	 */
 	public String toOutputString(long timestamp){
-		return getScore(timestamp) + " " + toString(); 
+		return getScore(timestamp) + " " + toString();
 	}
-	
-	
+
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	@Override	
+	@Override
 	public String toString(){
 		if (prettyString == null) {
 			prettyString = Utils.formatUnits(units, stresses);
 		}
 		return prettyString;
 	}
-	
-	
+
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
 	public boolean equals(Object other) {
-		if (other == null || !(other instanceof Word)) 
+		if (other == null || !(other instanceof Word))
 			return false;
 		else {
 			Word otherWord = (Word) other;
-			return Arrays.equals(stresses, otherWord.stresses) && 
+			return Arrays.equals(stresses, otherWord.stresses) &&
 				Arrays.equals(units, otherWord.units);
 		}
 	}
-	
-	
+
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
@@ -212,9 +212,9 @@ public class Word {
 		}
 		observedStressCount++;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Return whether a word appears to be stress-initial
 	 * @return whether the word appears to be stress-initial
@@ -228,8 +228,8 @@ public class Word {
 		// Check whether the initial is above .5
 		return normStresses[0] > .5;
 	}
-	
-	
-	
-	
+
+
+
+
 }

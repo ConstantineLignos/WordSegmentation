@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,10 +32,10 @@ public class SegUtil {
 	// Used to provide classes for toArrary results casting
 	private static final Object[][] DUMMY_OBJECT_NESTED_ARRAY = new Object[0][0];
 	private static final Boolean[] DUMMY_BOOLEAN_ARRAY = new Boolean[0];
-	
+
 	// TODO Make this configurable
 	public static double PEAKINESS = 0.5;
-	
+
 	/**
 	 * Return the slice created by the most recent boundary inserted. Will
 	 * throw an exception if there are no boundaries in the boundary array given.
@@ -55,19 +55,19 @@ public class SegUtil {
 				end = i;
 			}
 		}
-		
+
 		// If there are no boundaries, throw an exception. This is to prevent
 		// the caller (who is likely to call wordFromFinalBoundary later)
 		// from getting the word twice
 		if (start == end) throw new RuntimeException(
 				"Cannot be called on a boundary array that contains no boundaries.");
-		
-		// Now get the appropriate slice from the text. Increase start and 
+
+		// Now get the appropriate slice from the text. Increase start and
 		// end by one since they are aligned one left of the text
 		return Arrays.copyOfRange(sequence, start + 1, end + 1, sequence.getClass());
 	}
 
-	
+
 	/**
 	 * Return the slice between the final boundary and the end of the sequence.
 	 * @param sequence sequence to slice
@@ -81,13 +81,13 @@ public class SegUtil {
 		for (int i = 0; i < boundaries.length; i++) {
 			if (boundaries[i]) last = i;
 		}
-		
-		// Now get the appropriate slice from last to the end. Increase last  
+
+		// Now get the appropriate slice from last to the end. Increase last
 		// by one since it is aligned one left of the text
 		return Arrays.copyOfRange(sequence, last + 1, sequence.length, sequence.getClass());
 	}
-	
-	
+
+
 	/**
 	 * Return slices from all boundaries.
 	 * @param sequence sequence to slice
@@ -96,7 +96,7 @@ public class SegUtil {
 	 */
 	public static Object[][] slicesFromAllBoundaries(Object[] sequence, Boolean[] boundaries) {
 		List<Object[]> slices = new LinkedList<Object[]>();
-		
+
 		int start = -1;
 		int end = -1;
 		// Go through all boundaries, slicing out each spot
@@ -104,26 +104,26 @@ public class SegUtil {
 			if (boundaries[i]) {
 				start = end;
 				end = i;
-				
-				// Now get the appropriate slice. Increase start and 
+
+				// Now get the appropriate slice. Increase start and
 				// end by one since they are aligned one left of the text
 				 slices.add(Arrays.copyOfRange(sequence, start + 1, end + 1, sequence.getClass()));
 			}
 		}
 		// Now get the final slice, similarly offset end by 1
 		slices.add(Arrays.copyOfRange(sequence, end + 1, sequence.length, sequence.getClass()));
-		
+
 		// Do a crazy conversion to Object[][], thanks toArray!
 		return slices.toArray(DUMMY_OBJECT_NESTED_ARRAY);
 	}
-	
-	
+
+
 	/**
-	 * Choose the most frequent word in the list of words. 
+	 * Choose the most frequent word in the list of words.
 	 * @param words the words to choose from
 	 * @return the most frequent word
 	 */
-	public static Word chooseBestScoreWord(ArrayList<Word> words, Lexicon lex, 
+	public static Word chooseBestScoreWord(ArrayList<Word> words, Lexicon lex,
 			SubSeqCounter counter) {
 		// Pick the most frequent
 		Word bestWord = null;
@@ -137,26 +137,26 @@ public class SegUtil {
 		}
 		return bestWord;
 	}
-	
+
 	/**
 	 * Randomly choose the best word, preferring words of higher score.
 	 * @param words the words to choose from
 	 * @return the selected  word
 	 */
-	public static Word chooseSampledBestScoreWord(ArrayList<Word> words, Lexicon lex, 
+	public static Word chooseSampledBestScoreWord(ArrayList<Word> words, Lexicon lex,
 			SubSeqCounter counter) {
 		// First get the normalization denominator
 		double scoreSum = 0;
 		for (Word w : words) {
 			scoreSum += lex.getScore(w, counter);
 		}
-		
+
 		// Then normalize
 		double[] normScores = new double[words.size()];
 		for (int i = 0; i < normScores.length; i++) {
 			normScores[i] = lex.getScore(words.get(i), counter) / scoreSum;
 		}
-		
+
 		// Bias the scores, normalize again
 		scoreSum = 0;
 		for (int i = 0; i < normScores.length; i++) {
@@ -166,7 +166,7 @@ public class SegUtil {
 		for (int i = 0; i < normScores.length; i++) {
 			normScores[i] = normScores[i] / scoreSum;
 		}
-		
+
 		// Draw a random number and find the winner using Shannon/Miller/Selfridge
 		double draw = Math.random();
 		double sum = 0;
@@ -177,16 +177,16 @@ public class SegUtil {
 				break;
 			}
 		}
-		
+
 		return words.get(winningIdx);
 	}
-	
-	
+
+
 	private static double biasProb(double score) {
 		return Math.pow(Math.E, PEAKINESS * score);
 	}
 
-	
+
 	/**
 	 * Return which words should be trusted from all boundaries.
 	 * @param trusts the matching trusts for the boundaries
@@ -210,81 +210,81 @@ public class SegUtil {
 			// Always add the last word as trusted (its boundary is the end
 			// of the utterance
 			wordsTrusts.add(true);
-			
+
 			return wordsTrusts.toArray(DUMMY_BOOLEAN_ARRAY);
 		}
 	}
-	
-	
+
+
 	/**
 	 * Return the geometric mean of an array of numbers.
 	 * @param nums the numbers to average
 	 * @return their geometric mean
 	 */
-	public static double geometricMean(double[] nums) { 
+	public static double geometricMean(double[] nums) {
 		double prod = 1.0;
 		for (double num : nums) {
 			prod *= num;
 		}
 		return Math.pow(prod, 1.0/(double) nums.length);
 	}
-	
-	
+
+
 	/**
-	 * Return the negation of the number of ones in an array. 
+	 * Return the negation of the number of ones in an array.
 	 * @param nums the numbers to scan
 	 * @return the negation of the number of ones
 	 */
-	public static double countOnes(double[] nums) { 
+	public static double countOnes(double[] nums) {
 		int count = 0;
 		for (double num : nums) {
 			if (num == 1.0) {
 				count += 1;
 			}
 		}
-		
+
 		// Return the negation of the count so we can still choose a hypothesis
 		// by the max
 		return -count;
 	}
-	
-	
+
+
 	/**
 	 * Return the variance of the numbers in an array.
 	 * @param nums the numbers to scan
 	 * @return the variance
 	 */
-	public static double calcVariance(double[] nums) { 
+	public static double calcVariance(double[] nums) {
 		double sum = 0;
 		double sumSqrs = 0;
-		
+
 		for (double num : nums) {
 			sum += num;
 			sumSqrs += Math.pow(num, 2);
 		}
-			
+
 		double mean = sum/nums.length;
 		return (sumSqrs - sum * mean)/nums.length;
 	}
-	
-	
+
+
 	/**
 	 * Return the sum of differences between frequencies between words and the
 	 * the word that precedes them
 	 * @param nums the frequencies of words
 	 * @return sum of incremental differences
 	 */
-	public static double calcAlternation(double[] nums) { 
+	public static double calcAlternation(double[] nums) {
 		double sum = 0;
-		
+
 		for (int i = 1; i < nums.length; i++) {
 			sum += Math.abs(nums[i] - nums[i - 1]);
 		}
-			
+
 		return sum;
 	}
 
-	
+
 	/**
 	 * Return the sum of the logs of the numbers given.
 	 * @param nums the numbers
@@ -297,8 +297,8 @@ public class SegUtil {
 		}
 		return sum;
 	}
-	
-	
+
+
 	/**
 	 * Return the mean entropy of the logs of the numbers given.
 	 * @param nums the numbers
@@ -325,7 +325,7 @@ public class SegUtil {
 		for (int i = 0; i < beamScores.length; i++) {
 			normScores[i] = beamScores[i] / sum;
 		}
-		
+
 		// Bias the scores, normalize again
 		sum = 0;
 		for (int i = 0; i < normScores.length; i++) {
@@ -335,7 +335,7 @@ public class SegUtil {
 		for (int i = 0; i < normScores.length; i++) {
 			normScores[i] = normScores[i] / sum;
 		}
-		
+
 		// Draw a random number and find the winner using Shannon/Miller/Selfridge
 		double draw = Math.random();
 		sum = 0;
@@ -346,7 +346,7 @@ public class SegUtil {
 				break;
 			}
 		}
-		
+
 		return winningIdx;
 	}
 }

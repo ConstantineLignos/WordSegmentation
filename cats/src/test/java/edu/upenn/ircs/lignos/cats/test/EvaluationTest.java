@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -28,10 +28,10 @@ import junit.framework.TestCase;
 public class EvaluationTest extends TestCase{
 	String[] doggieSent1 = {"the", "do", "ggie", "ran"};
 	Boolean[] doggieBound1 = {true, false, true};
-	
+
 	String[] doggieSent2 = {"do", "ggies", "run"};
 	Boolean[] doggieBound2 = {false, true};
-	
+
 	/*
 	 * Test basic word extraction
 	 */
@@ -39,7 +39,7 @@ public class EvaluationTest extends TestCase{
 		String[] doggie1Words = {"the", "do|ggie", null, "ran"};
 		Utterance doggie1Utt = new Utterance(doggieSent1, null, doggieBound1);
 		assertTrue(Arrays.equals(Evaluation.wordsPredicted(doggie1Utt), doggie1Words));
-		
+
 		String[] doggie2Words = {"do|ggies", null, "run"};
 		Utterance doggie2Utt = new Utterance(doggieSent2, null, doggieBound2);
 		assertTrue(Arrays.equals(Evaluation.wordsPredicted(doggie2Utt), doggie2Words));

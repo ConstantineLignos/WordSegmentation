@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,11 +30,11 @@ import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
 public class UtteranceSegmenter implements Segmenter {
 	private int segs = 0;
 	private Lexicon lexicon;
-	
+
 	public UtteranceSegmenter(Lexicon lexicon) {
 		this.lexicon = lexicon;
 	}
-	
+
 	/*
 	 * Segment by doing absolutely nothing.
 	 */
@@ -43,13 +43,13 @@ public class UtteranceSegmenter implements Segmenter {
 		// Return an empty segmentation. We make a new blank array just to play it safe.
 		Boolean[] boundaries = utterance.getBoundariesCopy();
 		Arrays.fill(boundaries, false);
-		
+
 		// Increment the words used in the utterance.
 		if (training) {
-			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(),
 					boundaries, null);
 		}
-		
+
 		return boundaries;
 	}
 

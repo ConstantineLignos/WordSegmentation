@@ -62,18 +62,18 @@ public class SegExperiment implements Runnable  {
 		Result wordResult = segResults[1];
 		Result lexResult = segResults[2];
 		// Format output
-		results[resultsIndex] = (params.name + "," + 
-				String.format("%1.4f,", boundaryResult.precision) + 
+		results[resultsIndex] = (params.name + "," +
+				String.format("%1.4f,", boundaryResult.precision) +
 				String.format("%1.4f,", boundaryResult.recall) +
-				String.format("%1.4f,", boundaryResult.fScore) +	
-				String.format("%1.4f,", boundaryResult.hitRate) + 
-				String.format("%1.4f,", boundaryResult.faRate) + 
-				String.format("%1.4f,", boundaryResult.aPrime) + 
-				String.format("%1.4f,", wordResult.precision) + 
-				String.format("%1.4f,", wordResult.recall) + 
-				String.format("%1.4f,", wordResult.fScore) + 
-				String.format("%1.4f,", lexResult.precision) + 
-				String.format("%1.4f,", lexResult.recall) + 
+				String.format("%1.4f,", boundaryResult.fScore) +
+				String.format("%1.4f,", boundaryResult.hitRate) +
+				String.format("%1.4f,", boundaryResult.faRate) +
+				String.format("%1.4f,", boundaryResult.aPrime) +
+				String.format("%1.4f,", wordResult.precision) +
+				String.format("%1.4f,", wordResult.recall) +
+				String.format("%1.4f,", wordResult.fScore) +
+				String.format("%1.4f,", lexResult.precision) +
+				String.format("%1.4f,", lexResult.recall) +
 				String.format("%1.4f", lexResult.fScore));
 		System.out.println("Completed run for " + params.name + ".");
 	}
@@ -108,16 +108,16 @@ public class SegExperiment implements Runnable  {
 			propsFiles.add(propsScanner.next());
 		}
 		propsScanner.close();
-		
+
 		// Read in the input
 		List<Utterance> goldTrainUtterances = Utterance.loadUtterances(trainPath);
 		if (goldTrainUtterances == null) {
 			System.err.println("Could not read training file " + trainPath);
 			System.exit(1);
 		}
-		
+
 		List<Utterance> goldTestUtterances = null;
-		if (useTestData) { 
+		if (useTestData) {
 			goldTestUtterances = Utterance.loadUtterances(testPath);
 			if (goldTrainUtterances == null) {
 				System.err.println("Could not reading testing file " + testPath);
@@ -161,7 +161,7 @@ public class SegExperiment implements Runnable  {
 			if (name.contains(".")) {
 				name = name.substring(0, name.lastIndexOf('.'));
 			}
-			SegmenterParams params = new SegmenterParams(goldTrainUtterances, goldLexicon, 
+			SegmenterParams params = new SegmenterParams(goldTrainUtterances, goldLexicon,
 					goldTestUtterances, goldLexicon, props,	outBase, name);
 			pool.submit(new SegExperiment(params, outLines, idx++));
 		}

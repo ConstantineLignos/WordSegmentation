@@ -45,7 +45,7 @@ import edu.upenn.ircs.lignos.cats.segmenters.UtteranceSegmenter;
 public class Segment {
 	// Command line arguments
 	public static final String NO_TEST_FILE = "none";
-	
+
 	// Parameter names used for reading from property files
 	// Stress sensitive lookup is public because it affects lexicon creation
 	public static final String STRESS_SENSITIVE_PROP = "Stress_sensitive_lookup";
@@ -62,7 +62,7 @@ public class Segment {
 	private static final String LONGEST_PROP = "Longest";
 	private static final String RANDOM_SEG_THRESHOLD_PROP = "Random_Seg_Rate";
 	private static final String BEAM_SIZE_PROP = "Beam_size";
-	private static final String LEX_TRACE_PROP = "Lex_trace"; 
+	private static final String LEX_TRACE_PROP = "Lex_trace";
 	private static final String SEG_TRACE_PROP = "Seg_trace";
 	private static final String SEG_EVAL_LOG_PROP = "Seg_logging";
 	private static final String LEX_EVAL_LOG_PROP = "Lex_logging";
@@ -160,7 +160,7 @@ public class Segment {
 	public void segment(List<Utterance> segUtterances, boolean training) {
 		// We need to either be training or already have a lexicon
 		assert(training || lexicon != null);
-		
+
 		System.out.println("Initializing...");
 		// Create empty counter
 		counter = training && USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
@@ -177,7 +177,7 @@ public class Segment {
 		// Create the segmenter if we're training
 		if (training) {
 			if (SEGMENTER_NAME.equals(SEGMENTER_BEAM_SUBTRACTIVE)) {
-				seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE, lexicon, counter, 
+				seg = new BeamSubtractiveSegmenter(LONGEST, USE_STRESS, BEAM_SIZE, lexicon, counter,
 						RANDOMIZATION);
 			}
 			else if (SEGMENTER_NAME.equals(SEGMENTER_UNIT)) {
@@ -227,7 +227,7 @@ public class Segment {
 	/**
 	 * Evaluate the segmentation against gold
 	 */
-	public Result[] eval(List<Utterance> goldUtterances, List<Utterance> segUtterances, 
+	public Result[] eval(List<Utterance> goldUtterances, List<Utterance> segUtterances,
 			Lexicon goldLexicon, Lexicon segLexicon) {
 		if (goldUtterances.size() != segUtterances.size()) {
 			throw new RuntimeException("Different length gold and test utterances.");
@@ -241,36 +241,36 @@ public class Segment {
 		PrintStream wordLog = null;
 		PrintStream lexLog = null;
 		try {
-			segLog = SEG_EVAL_TRACE ? 
+			segLog = SEG_EVAL_TRACE ?
 					new PrintStream(outputBase + "_segeval.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open evaluation log file");
 		}
 		try {
-			perfLog = SEG_EVAL_TRACE ? 
+			perfLog = SEG_EVAL_TRACE ?
 					new PrintStream(outputBase + "_perflog.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open perf log file");
 		}
 		try {
-			wordLog = SEG_EVAL_TRACE ? 
+			wordLog = SEG_EVAL_TRACE ?
 					new PrintStream(outputBase + "_word.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open word log file");
 		}
 		try {
-			lexLog = LEX_EVAL_TRACE ? 
+			lexLog = LEX_EVAL_TRACE ?
 					new PrintStream(outputBase + "_lexeval.txt") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open evaluation log file");
 		}
 
-		Result boundaryResult = Evaluation.evalUtterances(goldUtterances, segUtterances, 
+		Result boundaryResult = Evaluation.evalUtterances(goldUtterances, segUtterances,
 				segLog, perfLog, EvalMethod.BOUNDARIES);
 		System.out.println("Boundaries:");
 		System.out.println(boundaryResult);
 
-		Result wordResult = Evaluation.evalUtterances(goldUtterances, segUtterances, 
+		Result wordResult = Evaluation.evalUtterances(goldUtterances, segUtterances,
 				segLog, wordLog, EvalMethod.WORDS);
 		System.out.println("Words:");
 		System.out.println(wordResult);
@@ -354,7 +354,7 @@ public class Segment {
 		// Lexicon behavior parameters
 		comments.append(PROB_MEM_PROP + ": Whether recall of words from the lexicon is proabilistic.\n");
 		props.setProperty(PROB_MEM_PROP, "false");
-		comments.append(PROB_MEM_AMOUNT_PROP + ": Parameter for exponential function for probabilitic " + 
+		comments.append(PROB_MEM_AMOUNT_PROP + ": Parameter for exponential function for probabilitic " +
 				"lexicon recall.\n");
 		props.setProperty(PROB_MEM_AMOUNT_PROP, "0.05");
 		comments.append(DECAY_AMT_PROP + ": Amount lexical entries decay after each utterance. " +
@@ -389,7 +389,7 @@ public class Segment {
 		props.setProperty(SEG_EVAL_LOG_PROP, "true");
 		comments.append(LEX_EVAL_LOG_PROP + ": Whether to write out information about the " +
 				"evaluation of the lexicon to a file.\n");
-		props.setProperty(LEX_EVAL_LOG_PROP, "true");		
+		props.setProperty(LEX_EVAL_LOG_PROP, "true");
 
 		return new CommentedProperties(props, comments.toString());
 	}
@@ -425,7 +425,7 @@ public class Segment {
 	public static Result[] callSegmenter(String trainPath, String testPath, String outPath,
 			String propsPath){
 		long startTime = System.currentTimeMillis();
-		
+
 		// Decide whether we're going to separate test and training data
 		boolean useTestData = testPath.toLowerCase() != NO_TEST_FILE;
 
@@ -438,9 +438,9 @@ public class Segment {
 		}
 		loadTime = System.currentTimeMillis() - loadTime;
 		System.out.println("Loading training data took " + loadTime / 1000F + " seconds.");
-		
+
 		List<Utterance> goldTestUtterances = null;
-		if (useTestData) { 
+		if (useTestData) {
 			loadTime = System.currentTimeMillis();
 			goldTestUtterances = Utterance.loadUtterances(testPath);
 			if (goldTrainUtterances == null) {
@@ -487,17 +487,17 @@ public class Segment {
 				dropStress);
 		List<Utterance> segTestUtterances = useTestData ?
 				Utterance.segUtterances(goldTestUtterances, dropStress) : null;
-		
+
 		// Train and test
 		seg.segment(segTrainUtterances, true);
 		if (useTestData) {
 			seg.segment(segTestUtterances, false);
 		}
-		
+
 		// Choose the right utterances for evaluation
 		List<Utterance> evalSegUtterances = useTestData ? segTestUtterances : segTrainUtterances;
 		List<Utterance> evalGoldUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
-		
+
 		// Output eval. It always gets the goldTrainLexicon because the lexicon is only learned
 		// during training.
 		Result[] evalResults = seg.eval(evalGoldUtterances, evalSegUtterances, goldTrainLexicon,

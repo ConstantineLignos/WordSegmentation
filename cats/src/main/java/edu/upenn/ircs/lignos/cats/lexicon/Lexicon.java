@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -34,14 +34,14 @@ import java.util.Random;
 
 public class Lexicon {
 	private static final String KEY_DELIM = "|";
-	
+
 	// TODO: Make these configurable
 	// Amount to penalize
-	private static final double PENALTY = 1.0; 
-	private static final double INIT_SCORE = 1.0; 
-	private static final double UNKNOWN_WORD_SCORE = .5; 
-	private static final double SMOOTHING_MIN = 1.0; 
-	
+	private static final double PENALTY = 1.0;
+	private static final double INIT_SCORE = 1.0;
+	private static final double UNKNOWN_WORD_SCORE = .5;
+	private static final double SMOOTHING_MIN = 1.0;
+
 	private final boolean stressSensitive;
 	private final boolean trace;
 	private final boolean useTrust;
@@ -65,10 +65,10 @@ public class Lexicon {
 	private Random rand;
 	// The subsequence counter
 	private SubSeqCounter counter;
-	
+
 	private Map<String, Word> lexicon;
-	
-	
+
+
 	/**
 	 * Create a new, empty lexicon.
 	 * @param stressSensitive whether the lexicon should take stress into account
@@ -81,30 +81,30 @@ public class Lexicon {
 		this.useTrust = useTrust;
 		this.NORMALIZATION = useNorm;
 		this.counter = counter;
-		
+
 		// Set up probabilistic memory
 		this.useProbMem = useProbMem;
 		this.probAmount = useProbMem ? probAmount : 0.0;
-		
+
 		// Other constants
 		this.initScore = INIT_SCORE;
 		this.smoothingMin = SMOOTHING_MIN;
 		this.unknownWordScore = UNKNOWN_WORD_SCORE;
-		
+
 		// Set up decay on words
 		if (decayAmount != 0.0) {
 			Word.setDecay(true, decayAmount);
 		}
-		
+
 		lexicon = new THashMap<String, Word>();
 		time = 1;
 		numTokens = 0;
 		rand = new Random(0);
 	}
-	
-	
+
+
 	/**
-	 * Make a lexicon key for the given text and stress information, taking 
+	 * Make a lexicon key for the given text and stress information, taking
 	 * stress sensitivity into account.
 	 * @param text the text to generate a key from
 	 * @param stress the matching stress information for the text
@@ -113,17 +113,17 @@ public class Lexicon {
 	private String makeKey(String[] text, Boolean[] stresses) {
 		StringBuilder key = new StringBuilder();
 		key.append(Utils.join(text, KEY_DELIM));
-		
+
 		// If we're stress sensitive, tack the stresses on the end, note
 		// we just use 1s and 0s to keep the string shorter than true/false would
 		if (stressSensitive) {
-			for (Boolean stress : stresses) 
+			for (Boolean stress : stresses)
 				key.append(stress ? '1' : '0');
 		}
 		return key.toString();
 	}
-	
-	
+
+
 	/**
 	 * Returns the Word for the given text and stress information, returning
 	 * null if it is not in the lexicon.
@@ -134,8 +134,8 @@ public class Lexicon {
 	public Word getWord(String[] units, Boolean[] stresses){
 		return lexicon.get(makeKey(units, stresses));
 	}
-	
-	
+
+
 	/**
 	 * Returns whether there is a Word with "in" the lexicon with the provided
 	 * info. This should only be used in evaluation.
@@ -146,8 +146,8 @@ public class Lexicon {
 	public boolean isEvalWord(String[] units, Boolean[] stresses){
 		return isEvalWord(lexicon.get(makeKey(units, stresses)));
 	}
-	
-	
+
+
 	/**
 	 * Returns whether there is a Word with "in" the lexicon with the provided
 	 * info. This should only be used in evaluation.
@@ -158,8 +158,8 @@ public class Lexicon {
 		// Return false if the word wasn't found, and check the score otherwise
 		return recallWord(word);
 	}
-	
-	
+
+
 	/**
 	 * Returns whether we succeed in recalling a word.
 	 * @param word word to check
@@ -178,8 +178,8 @@ public class Lexicon {
 			return w.getScore(time) > 0;
 		}
 	}
-	
-	
+
+
 	/**
 	 * Increment a word in the lexicon
 	 * @param units units of the word
@@ -193,7 +193,7 @@ public class Lexicon {
 		if (w == null) {
 			w = new Word(units, stresses, this.initScore, time);
 			lexicon.put(key, w);
-			if (trace) System.out.println("Added " + w + " " + w.getScore(time) + 
+			if (trace) System.out.println("Added " + w + " " + w.getScore(time) +
 					(counter != null ? " " + counter.get(w.units) : ""));
 			// All new words start with an initial score, so they don't need
 			// to be incremented like existing words
@@ -204,12 +204,12 @@ public class Lexicon {
 		}
 		// Count the token
 		numTokens++;
-		
+
 		// Note the stress information
 		w.countStress(stresses);
 	}
-	
-	
+
+
 	/**
 	 * Increment a word known to be in the lexicon. This indirection is provided
 	 * to allow for any bookkeeping on increment
@@ -217,11 +217,11 @@ public class Lexicon {
 	 */
 	private void incWord(Word w) {
 		w.increment(time);
-		if (trace) System.out.println("Incremented " + w + " " + w.getScore(time) + 
+		if (trace) System.out.println("Incremented " + w + " " + w.getScore(time) +
 				(counter != null ? " " + counter.get(w.units) : ""));
 	}
-	
-	
+
+
 	/**
 	 * Penalize the given word.
 	 * @param w word to penalize
@@ -232,21 +232,21 @@ public class Lexicon {
 		numTokens -= PENALTY;
 		if (trace) System.out.println("Penalized " + w + " " + w.getScore(time));
 	}
-	
-	
+
+
 	/**
 	 * @return a Collection of the words in the lexicon
 	 */
 	public Collection<Word> getWords(){return lexicon.values();}
 
-	
+
 	/**
 	 * Increment all words contained in a segmented utterance.
 	 * @param units the units of the utterance
 	 * @param stresses the stresses of the utterance
 	 * @param boundaries the boundaries of the utterance
 	 */
-	public void incUtteranceWords(String[] units, Boolean[] stresses, 
+	public void incUtteranceWords(String[] units, Boolean[] stresses,
 			Boolean[] boundaries, boolean[] trusts) {
 		// If we're not using trusts, ignore the trusts passed
 		Boolean[] wordsTrusts;
@@ -256,23 +256,23 @@ public class Lexicon {
 		else {
 			wordsTrusts = SegUtil.wordsTrusts(trusts, boundaries);
 		}
-		
+
 		// Get slices of the stresses and units in this utterance
-		Object[][] wordsUnits = 
+		Object[][] wordsUnits =
 			SegUtil.slicesFromAllBoundaries(units, boundaries);
-		Object[][] wordsStresses = 
+		Object[][] wordsStresses =
 			SegUtil.slicesFromAllBoundaries(stresses, boundaries);
-		
+
 		// Each element of the outer array represents units/stresses for a single word
 		for (int i = 0; i < wordsUnits.length; i++) {
-			// Reward if no trust info was provided or if trusted  
+			// Reward if no trust info was provided or if trusted
 			if (wordsTrusts == null || wordsTrusts[i]) {
 				rewardWord(((String[]) wordsUnits[i]), ((Boolean[]) wordsStresses[i]));
 			}
 		}
 	}
-	
-	
+
+
 	/**
 	 * Return the scores of words in an utterance, counting unknown words as
 	 * the default initial score.
@@ -282,14 +282,14 @@ public class Lexicon {
 	 * @param counter the subsequence counter to discount scores by, null if not needed
 	 * @return the frequency of the words in the utterance
 	 */
-	public double[] utteranceWordsScores(String[] units, Boolean[] stresses, Boolean[] boundaries, 
+	public double[] utteranceWordsScores(String[] units, Boolean[] stresses, Boolean[] boundaries,
 			SubSeqCounter counter) {
 		// Get slices of the stresses and units in this utterance
-		Object[][] wordsUnits = 
+		Object[][] wordsUnits =
 			SegUtil.slicesFromAllBoundaries(units, boundaries);
-		Object[][] wordsStresses = 
+		Object[][] wordsStresses =
 			SegUtil.slicesFromAllBoundaries(stresses, boundaries);
-		
+
 		// Each element of the outer array represents units/stresses for a single word
 		double[] wordsScores = new double[wordsUnits.length];
 		for (int i = 0; i < wordsUnits.length; i++) {
@@ -305,7 +305,7 @@ public class Lexicon {
 		}
 		return wordsScores;
 	}
-	
+
 	/**
 	 * Gives the minimum smoothed word score taking normalization into account.
 	 * @return minimum smoothed word score
@@ -313,7 +313,7 @@ public class Lexicon {
 	private double getSmoothingMin(){
 		return NORMALIZATION ? smoothingMin / numTokens : smoothingMin;
 	}
-	
+
 	/**
 	 * Gives the new word score taking normalization into account.
 	 * @return new word score
@@ -321,7 +321,7 @@ public class Lexicon {
 	private double getNewWordScore(){
 		return NORMALIZATION ? unknownWordScore / numTokens : unknownWordScore;
 	}
-	
+
 	/**
 	 * Return an ArrayList of Words that are prefixes of the utterance at the given
 	 * index. Throws a RuntimeException if the index is not a valid index
@@ -331,20 +331,20 @@ public class Lexicon {
 	 * @return an ArrayList of Words that are prefixes, in order of increasing length
 	 */
 	public ArrayList<Word> getPrefixWords(Utterance utt, int index) {
-		String[] units = utt.getUnits(); 
+		String[] units = utt.getUnits();
 		Boolean[] stresses = utt.getStresses();
 		ArrayList<Word> prefixWords = new ArrayList<Word>();
-		
+
 		// Reject index if it's too high
 		if (index >= units.length || index < 0)
 			throw new RuntimeException("Starting index out of range.");
-		
+
 		// Take progressively larger slices of the utterance. Since the
 		// slice end index is exclusive, i can go up to units.length
 		for (int i = index + 1; i <= units.length; i++) {
 			String[] prefixUnits = Arrays.copyOfRange(units, index, i);
 			Boolean[] prefixStresses = Arrays.copyOfRange(stresses, index, i);
-			
+
 			// Add to the list if the current prefix is a word with a positive
 			// score
 			Word w = getWord(prefixUnits, prefixStresses);
@@ -353,20 +353,20 @@ public class Lexicon {
 
 		return prefixWords;
 	}
-	
-	
+
+
 	/**
 	 * Create a lexicon from segmented utterances.
 	 * @param utterances the segmented utterances to build a lexicon from
 	 * @return a lexicon matching the utterances
 	 */
-	public static Lexicon lexiconFromUtterances(Collection<Utterance> utterances, 
+	public static Lexicon lexiconFromUtterances(Collection<Utterance> utterances,
 			boolean stressSensitive) {
 		// Make a new lexicon with trace off
 		Lexicon lex = new Lexicon(stressSensitive, false, false, false, false, 0.0, 0.0, null);
 		// Increment the words in each utterance
 		for (Utterance utt : utterances) {
-			lex.incUtteranceWords(utt.getUnits(), utt.getStresses(), 
+			lex.incUtteranceWords(utt.getUnits(), utt.getStresses(),
 					utt.getBoundariesCopy(), null);
 		}
 		return lex;
@@ -385,13 +385,13 @@ public class Lexicon {
 	public Word getSplitWord(Utterance utt, Boolean[] goodSeg, Boolean[] badSeg) {
 		// Find the word that they split on
 		// Get slices of the stresses and units in each segmentation
-		Object[][] goodWordsUnits = 
+		Object[][] goodWordsUnits =
 			SegUtil.slicesFromAllBoundaries(utt.getUnits(), goodSeg);
-		Object[][] badWordsUnits = 
+		Object[][] badWordsUnits =
 			SegUtil.slicesFromAllBoundaries(utt.getUnits(), badSeg);
-		Object[][] badWordsStresses = 
+		Object[][] badWordsStresses =
 			SegUtil.slicesFromAllBoundaries(utt.getStresses(), badSeg);
-		
+
 		// Find the first difference
 		String [] blameWordUnits = null;
 		Boolean [] blameWordStresses = null;
@@ -402,22 +402,22 @@ public class Lexicon {
 				break;
 			}
 		}
-		
+
 		if(blameWordUnits == null || blameWordStresses == null)
 			throw new RuntimeException("Failed to find difference between segmentations.");
-		
+
 		return getWord(blameWordUnits, blameWordStresses);
 	}
-	
-	
+
+
 	/**
 	 * Perform any maintenance operations after each utterance.
 	 */
 	public void tick() {
 		time++;
 	}
-	
-	
+
+
 	/**
 	 * Return the score of a word. Wraps the word function and provides the time
 	 * to it.
@@ -427,19 +427,19 @@ public class Lexicon {
 	public double getScore(Word w, SubSeqCounter counter) {
 		// Smooth sub-minimal scores
 		double score = Math.max(w.getScore(time), getSmoothingMin());
-		
+
 		// Account for normalization, and then sequence frequency
 		score = NORMALIZATION ? score / numTokens : score;
 		score = counter != null ? score / counter.get(w.units) : score;
 		return score;
 	}
 
-	
+
 	private double probMemRecallRate(double rawScore) {
 		return 1.0 - Math.exp(-probAmount * rawScore);
 	}
-	
-	
+
+
 	public class WordScoreComparator implements Comparator<Word> {
 		/* (non-Javadoc)
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
@@ -450,7 +450,7 @@ public class Lexicon {
 		}
 	}
 
-	
+
 	/**
 	 * Return a formatted version of a word for dumps.
 	 * @param w the word

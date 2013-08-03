@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -29,16 +29,16 @@ public class RandomSegmenter implements Segmenter {
 	private double threshold = .5;
 	private int segs = 0;
 	private Lexicon lexicon;
-	
+
 	/**
-	 * Create a 
+	 * Create a
 	 * @param threshold
 	 */
 	public RandomSegmenter(double threshold, Lexicon lexicon) {
 		this.threshold = threshold;
 		this.lexicon = lexicon;
 	}
-	
+
 	/*
 	 * Segment by marking each possible boundary as a boundary
 	 */
@@ -46,7 +46,7 @@ public class RandomSegmenter implements Segmenter {
 	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
 		// Return all segmentation points as true
 		Boolean[] boundaries = utterance.getBoundariesCopy();
-		
+
 		// Randomly insert boundaries
 		for (int i=0; i<boundaries.length; i++) {
 			if (Math.random() < threshold) {
@@ -54,16 +54,16 @@ public class RandomSegmenter implements Segmenter {
 				segs++;
 			}
 			else {
-				boundaries[i] = false;				
+				boundaries[i] = false;
 			}
 		}
 
 		// Increment the words used in the utterance.
 		if (training) {
-			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), 
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(),
 					boundaries, null);
 		}
-		
+
 		return boundaries;
 	}
 

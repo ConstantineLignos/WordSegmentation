@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,25 +24,25 @@ import junit.framework.TestCase;
 
 public class FrequencyDistributionTest extends TestCase {
 	private FrequencyDistribution<String> fd;
-	
+
 	public void setUp() {
 		fd = new FrequencyDistribution<String>();
 	}
-	
+
 	public void testInc() {
 		fd.inc("a");
 		assertEquals(1, fd.getCount("a"));
 		fd.inc("a");
 		assertEquals(2, fd.getCount("a"));
 	}
-	
+
 	public void testIncAmount() {
 		fd.inc("a", 2);
 		assertEquals(2, fd.getCount("a"));
 		fd.inc("a", 3);
 		assertEquals(5, fd.getCount("a"));
 	}
-	
+
 	public void testTotal() {
 		fd.inc("a");
 		assertEquals(1, fd.getTotal());
@@ -51,7 +51,7 @@ public class FrequencyDistributionTest extends TestCase {
 		fd.inc("b", 2);
 		assertEquals(6, fd.getTotal());
 	}
-	
+
 	public void testSize() {
 		fd.inc("a");
 		assertEquals(1, fd.size());
@@ -60,7 +60,7 @@ public class FrequencyDistributionTest extends TestCase {
 		fd.inc("b", 2);
 		assertEquals(2, fd.size());
 	}
-	
+
 	public void testFreq() {
 		fd.inc("a", 1);
 		assertEquals(1.0, fd.getFreq("a"));

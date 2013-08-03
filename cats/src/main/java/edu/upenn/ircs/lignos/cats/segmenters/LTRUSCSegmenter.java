@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,8 +32,8 @@ public class LTRUSCSegmenter implements Segmenter {
 	public LTRUSCSegmenter (Lexicon lexicon) {
 		this.lexicon = lexicon;
 	}
-	
-	/* 
+
+	/*
 	 * Segment using the Unique Stress Constraint to limit the amount of
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
@@ -44,7 +44,7 @@ public class LTRUSCSegmenter implements Segmenter {
 		Boolean[] segmentation = utterance.getBoundariesCopy();
 		String[] units = utterance.getUnits();
 		Boolean[] stresses = utterance.getStresses();
-		
+
 		// Go through the first n-1 words of the utterance, placing a boundary
 		// if the next unit is stressed and we've already seen a stress this word
 		boolean seenStress = false;
@@ -52,7 +52,7 @@ public class LTRUSCSegmenter implements Segmenter {
 			// Set the flag if this unit is stressed
 			if (stresses[i]) seenStress = true;
 			if (seenStress && stresses[i + 1]) {
-				segmentation[i] = true;		
+				segmentation[i] = true;
 				uscSegs++;
 				// Each time you place a boundary, increment the word in the lexicon
 				if (training) {
@@ -62,16 +62,16 @@ public class LTRUSCSegmenter implements Segmenter {
 				seenStress = false;
 			}
 		}
-		
+
 		// Increment the final word in the lexicon
 		if (training) {
 			lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
 					(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
 		}
-		
+
 		return segmentation;
 	}
-	
+
 	public String getStats() {
 		return "USC segs: " + uscSegs;
 	}

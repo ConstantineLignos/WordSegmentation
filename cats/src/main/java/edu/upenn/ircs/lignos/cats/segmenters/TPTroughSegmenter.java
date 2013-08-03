@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -61,7 +61,7 @@ public class TPTroughSegmenter implements Segmenter {
 		}
 	}
 
-	/* 
+	/*
 	 * Segment using the Unique Stress Constraint to limit the amount of
 	 * stress per word and place boundaries between adjacent primary stresses.
 	 */
@@ -71,7 +71,7 @@ public class TPTroughSegmenter implements Segmenter {
 		if (training) {
 			train(utterance);
 		}
-		
+
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		Boolean[] segmentation = utterance.getBoundariesCopy();
@@ -89,13 +89,13 @@ public class TPTroughSegmenter implements Segmenter {
 				segs++;
 			}
 		}
-		
+
 		// Increment the words used in the utterance.
 		if (training) {
 			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
 					null);
 		}
-		
+
 		return segmentation;
 	}
 

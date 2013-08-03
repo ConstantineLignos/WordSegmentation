@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,13 +26,13 @@ import gnu.trove.map.hash.THashMap;
  * A simple counter class.
  */
 public class SimpleCounter {
-	
+
 	private Map<Object, Integer> counts;
-	
+
 	public SimpleCounter() {
 		counts = new THashMap<Object, Integer>();
 	}
-	
+
 	/**
 	 * Increment the count of the specified item.
 	 * @param item the item to count
@@ -41,7 +41,7 @@ public class SimpleCounter {
 		Integer count = counts.get(item);
 		counts.put(item, count == null ? 1 : ++count);
 	}
-	
+
 	/**
 	 * Returns the count of the specified item, or zero if it has never been counted.
 	 * @param item the item whose associated count should be returned

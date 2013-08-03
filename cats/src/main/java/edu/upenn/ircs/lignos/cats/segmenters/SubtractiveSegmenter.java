@@ -44,7 +44,7 @@ public class SubtractiveSegmenter implements Segmenter {
 		}
 		// Increment the words used in the utterance.
 		if (training) {
-			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation, 
+			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
 					null);
 		}
 

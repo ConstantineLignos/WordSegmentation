@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,17 +24,17 @@ import java.util.Arrays;
 import edu.upenn.ircs.lignos.cats.Utils;
 
 /**
- * A counter particularly for sequences of String[] that wraps SimpleCounter. This does not inherit 
- * from SimpleCounter to prevent accidental use of the underlying SimpleCounter methods, which can 
+ * A counter particularly for sequences of String[] that wraps SimpleCounter. This does not inherit
+ * from SimpleCounter to prevent accidental use of the underlying SimpleCounter methods, which can
  * have disastrous consequences as the object type of the SimpleCounter arguments makes silent type
  * safety violations easy.
  */
 public class SubSeqCounter {
 
 	private static final String KEY_DELIM = "|";
-	
+
 	private SimpleCounter counter;
-	
+
 	public SubSeqCounter() {
 		counter = new SimpleCounter();
 	}
@@ -47,7 +47,7 @@ public class SubSeqCounter {
 	private String makeKey(String[] units) {
 		return Utils.join(units, KEY_DELIM);
 	}
-	
+
 	/**
 	 * Increments the count of the specified units as a whole.
 	 * @param units the units to increment the count of
@@ -76,6 +76,6 @@ public class SubSeqCounter {
 			for (int i=0; i <= (units.length - length); i++) {
 				inc(Arrays.copyOfRange(units, i, i + length));
 			}
-		}		
+		}
 	}
 }

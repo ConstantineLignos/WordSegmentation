@@ -7,7 +7,7 @@
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or
  (at your option) any later version.
- 
+
  CATS is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,7 +26,7 @@ import java.util.Properties;
 
 public class Utils {
 	private static final String UNIT_DELIM = "|";
-	
+
 	/**
 	 * Join the given Objects' string representations using a delimiter.
 	 * @param items an array of Objects to join
@@ -37,7 +37,7 @@ public class Utils {
 		// Return an empty string for an empty list
 		if (items.length == 0)
 			return "";
-		
+
 		// Otherwise build up the joined string
 		StringBuilder out = new StringBuilder();
 		// Put the delimiter after all but the last item
@@ -47,10 +47,10 @@ public class Utils {
 		}
 		// Add the last element
 		out.append(items[items.length - 1]);
-		
+
 		return out.toString();
 	}
-	
+
 	/**
 	 * Returns a formatted string of units and their stresses.
 	 * @param units units to format
@@ -67,10 +67,10 @@ public class Utils {
 		}
 		// Add the last unit
 		output.append(units[i] + (stresses[i] ? "(1)" : ""));
-		
+
 		return output.toString();
 	}
-	
+
 	/**
 	 * Read a Properties object from the specified path.
 	 * @param path the path to read properties from
