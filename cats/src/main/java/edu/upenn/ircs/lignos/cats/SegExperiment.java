@@ -134,7 +134,6 @@ public class SegExperiment implements Runnable  {
 			System.err.println("Couldn't open output file " + outPath);
 			System.exit(1);
 		}
-		out.println("Condition,BP,BR,BF,BH,BFA,BAP,WP,WR,WF,LP,LR,LF");
 
 		// Set up place to store the results of each line
 		String[] outLines = new String[propsFiles.size()];
@@ -171,6 +170,7 @@ public class SegExperiment implements Runnable  {
 		pool.shutdown();
 		try {
 			pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+			out.println("Condition,BP,BR,BF,BH,BFA,BAP,WP,WR,WF,LP,LR,LF");
 			for (String line : outLines) {
 				out.println(line);
 			}
