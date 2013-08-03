@@ -224,33 +224,39 @@ public class Segment {
 		if (goldUtterances.size() != segUtterances.size()) {
 			throw new RuntimeException("Different length gold and test utterances.");
 		}
-		
+
 		System.out.println("Evaluating...");
-		// TODO Refactor logging
-		PrintStream segLog;
-		PrintStream perfLog;
-		PrintStream wordLog;
+
+		// Set up logs
+		PrintStream segLog = null;
+		PrintStream perfLog = null;
+		PrintStream wordLog = null;
+		PrintStream lexLog = null;
 		try {
 			segLog = SEG_EVAL_TRACE ? 
 					new PrintStream(outputBase + "_segeval.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open evaluation log file");
-			segLog = null;
 		}
 		try {
 			perfLog = SEG_EVAL_TRACE ? 
 					new PrintStream(outputBase + "_perflog.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open perf log file");
-			perfLog = null;
 		}
 		try {
 			wordLog = SEG_EVAL_TRACE ? 
 					new PrintStream(outputBase + "_word.csv") : null;
 		} catch (FileNotFoundException e) {
 			System.err.println("Couldn't open word log file");
-			wordLog = null;
 		}
+		try {
+			lexLog = LEX_EVAL_TRACE ? 
+					new PrintStream(outputBase + "_lexeval.txt") : null;
+		} catch (FileNotFoundException e) {
+			System.err.println("Couldn't open evaluation log file");
+		}
+
 		Result boundaryResult = Evaluation.evalUtterances(goldUtterances, segUtterances, 
 				segLog, perfLog, EvalMethod.BOUNDARIES);
 		System.out.println("Boundaries:");
@@ -261,18 +267,14 @@ public class Segment {
 		System.out.println("Words:");
 		System.out.println(wordResult);
 
-		PrintStream lexLog;
-		try {
-			lexLog = LEX_EVAL_TRACE ? 
-					new PrintStream(outputBase + "_lexeval.txt") : null;
-		} catch (FileNotFoundException e) {
-			System.err.println("Couldn't open evaluation log file");
-			lexLog = null;
-		}
 		System.out.println("Lexicon:");
 		Result lexResult = Evaluation.evalLexicons(goldLexicon, segLexicon, lexLog);
 
-		// TODO Close logs properly
+		// Close any open logs
+		if (segLog != null) segLog.close();
+		if (perfLog != null) perfLog.close();
+		if (wordLog != null) wordLog.close();
+		if (lexLog != null) lexLog.close();
 
 		System.out.println(lexResult.toStringPRF());
 		System.out.println("Done evaluating.");
@@ -484,6 +486,7 @@ public class Segment {
 			seg.segment(segTestUtterances, false);
 		}
 		
+		// Choose the right utterances for evaluation
 		List<Utterance> evalSegUtterances = useTestData ? segTestUtterances : segTrainUtterances;
 		List<Utterance> evalGoldUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
 		
