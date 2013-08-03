@@ -156,12 +156,13 @@ public class Segment {
 
 	/**
 	 * Run the segmenter on each utterance.
+	 * @param verbose TODO
 	 */
-	public void segment(List<Utterance> segUtterances, boolean training) {
+	public void segment(List<Utterance> segUtterances, boolean training, boolean verbose) {
 		// We need to either be training or already have a lexicon
 		assert(training || lexicon != null);
 
-		System.out.println("Initializing...");
+		if (verbose) System.out.println("Initializing...");
 		// Create empty counter
 		counter = training && USE_SUBSEQ_DISCOUNT ? new SubSeqCounter() : null;
 
@@ -171,7 +172,7 @@ public class Segment {
 					USE_PROB_MEM, NORMALIZATION, PROB_AMOUNT, DECAY_AMOUNT, counter);
 		}
 
-		System.out.println("Segmenting...");
+		if (verbose) System.out.println("Segmenting...");
 		long segTime = System.currentTimeMillis();
 
 		// Create the segmenter if we're training
@@ -218,9 +219,11 @@ public class Segment {
 
 		segTime = System.currentTimeMillis() - segTime;
 		// Output stats
-		System.out.println(seg.getStats());
-		System.out.println((training ? "Training" : "Testing") + " took " + segTime / 1000F +
-				" seconds.");
+		if (verbose) {
+			System.out.println(seg.getStats());
+			System.out.println((training ? "Training" : "Testing") + " took " + segTime / 1000F +
+					" seconds.");
+		}
 	}
 
 
@@ -229,7 +232,7 @@ public class Segment {
 	 */
 	public Result[] eval(List<Utterance> goldTrainUtterances, List<Utterance> segTrainUtterances,
 			List<Utterance> goldTestUtterances, List<Utterance> segTestUtterances,
-			Lexicon goldTrainLexicon, Lexicon segTrainLexicon) {
+			Lexicon goldTrainLexicon, Lexicon segTrainLexicon, boolean verbose) {
 		boolean useTestData = goldTestUtterances != null;
 		List<Utterance> goldEvalUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
 		List<Utterance> segEvalUtterances = useTestData ? segTestUtterances : segTrainUtterances;
@@ -238,7 +241,7 @@ public class Segment {
 			throw new RuntimeException("Different length gold and test utterances.");
 		}
 
-		System.out.println("Evaluating...");
+		if (verbose) System.out.println("Evaluating...");
 
 		// Set up logs
 		PrintStream segLog = null;
@@ -279,27 +282,29 @@ public class Segment {
 			Evaluation.evalUtterances(goldTrainUtterances, segTrainUtterances,
 					null, perfLog, EvalMethod.BOUNDARIES);
 		}
-		System.out.println("Boundaries:");
-		System.out.println(boundaryResult);
 
 		// Word tokens
 		Result wordTokensResults = Evaluation.evalUtterances(goldEvalUtterances, segEvalUtterances,
 				segLog, wordLog, EvalMethod.WORDS);
-		System.out.println("Words tokens:");
-		System.out.println(wordTokensResults);
 
 		// Word types
 		Lexicon goldEvalLexicon = Lexicon.lexiconFromUtterances(goldEvalUtterances,
 				goldTrainLexicon.stressSensitive);
 		Lexicon segEvalLexicon = Lexicon.lexiconFromUtterances(segEvalUtterances,
 				goldTrainLexicon.stressSensitive);
-		System.out.println("Word types:");
 		Result wordTypesResult = Evaluation.evalLexicons(goldEvalLexicon, segEvalLexicon, null, false);
-		System.out.println(wordTypesResult.toStringPRF());
+		Result lexResult = Evaluation.evalLexicons(goldTrainLexicon, segTrainLexicon, lexLog, verbose);
 
-		System.out.println("Lexicon:");
-		Result lexResult = Evaluation.evalLexicons(goldTrainLexicon, segTrainLexicon, lexLog, true);
-		System.out.println(lexResult.toStringPRF());
+		if (verbose) {
+			System.out.println("Boundaries:");
+			System.out.println(boundaryResult);
+			System.out.println("Words tokens:");
+			System.out.println(wordTokensResults);
+			System.out.println("Word types:");
+			System.out.println(wordTypesResult.toStringPRF());
+			System.out.println("Lexicon:");
+			System.out.println(lexResult.toStringPRF());
+		}
 
 		// Close any open logs
 		if (segLog != null) segLog.close();
@@ -489,7 +494,7 @@ public class Segment {
 
 		// Segment
 		Result[] evalResults = runSegmenter(goldTrainUtterances, goldTrainLexicon,
-				goldTestUtterances, goldTestLexicon, props, outPath);
+				goldTestUtterances, goldTestLexicon, props, outPath, true);
 
 		long endTime = System.currentTimeMillis() - startTime;
 		System.out.println("Run took " + endTime / 1000F + " seconds.");
@@ -498,7 +503,7 @@ public class Segment {
 
 	public static Result[] runSegmenter(List<Utterance> goldTrainUtterances,
 			Lexicon goldTrainLexicon, List<Utterance> goldTestUtterances, Lexicon goldTestLexicon,
-			Properties props, String outPath) {
+			Properties props, String outPath, boolean verbose) {
 		boolean useTestData = goldTestUtterances != null;
 		Segment seg = new Segment(props, outPath);
 
@@ -510,15 +515,15 @@ public class Segment {
 				Utterance.segUtterances(goldTestUtterances, dropStress) : null;
 
 		// Train and test
-		seg.segment(segTrainUtterances, true);
+		seg.segment(segTrainUtterances, true, verbose);
 		if (useTestData) {
-			seg.segment(segTestUtterances, false);
+			seg.segment(segTestUtterances, false, verbose);
 		}
 
 		// Output eval. It always gets the goldTrainLexicon because the lexicon is only learned
 		// during training.
 		Result[] evalResults = seg.eval(goldTrainUtterances, segTrainUtterances,
-				goldTestUtterances, segTestUtterances, goldTrainLexicon, seg.lexicon);
+				goldTestUtterances, segTestUtterances, goldTrainLexicon, seg.lexicon, verbose);
 		seg.writeOutput(segTrainUtterances, seg.lexicon);
 
 		return evalResults;

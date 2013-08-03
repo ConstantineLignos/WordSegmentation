@@ -54,9 +54,10 @@ public class SegExperiment implements Runnable  {
 	}
 
 	public void run() {
-		System.out.println("Starting run for properties" + params.name);
-		Result[] segResults = Segment.runSegmenter(params.goldTrainUtterances, params.goldTrainLexicon,
-				params.goldTestUtterances, params.goldTestLexicon, params.props, params.outPath);
+		System.out.println("Started " + params.name);
+		Result[] segResults = Segment.runSegmenter(params.goldTrainUtterances,
+				params.goldTrainLexicon, params.goldTestUtterances, params.goldTestLexicon,
+				params.props, params.outPath, false);
 		// Unpack results
 		Result boundaryResult = segResults[0];
 		Result wordTokenResult = segResults[1];
@@ -80,7 +81,7 @@ public class SegExperiment implements Runnable  {
 				String.format("%1.4f,", lexResult.precision) +
 				String.format("%1.4f,", lexResult.recall) +
 				String.format("%1.4f", lexResult.fScore));
-		System.out.println("Completed run for " + params.name + ".");
+		System.out.println("Finished " + params.name);
 	}
 
 	/**
@@ -146,7 +147,7 @@ public class SegExperiment implements Runnable  {
 
 		// Get the number of cores and start a thread pool
 		int cores = Runtime.getRuntime().availableProcessors();
-		System.out.println("Number of threads: " + cores);
+		System.out.println("Number of parallel workers: " + cores);
 		ExecutorService pool = Executors.newFixedThreadPool(cores);
 		long startTime = System.currentTimeMillis();
 
