@@ -1,5 +1,6 @@
 package edu.upenn.ircs.lignos.cats;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.List;
@@ -132,9 +133,10 @@ public class SegExperiment implements Runnable  {
 					stress_sensitive_lookup);
 
 			// Clean up name
-			String name = propsPath.contains(".") ?
-					propsPath.substring(0, propsPath.lastIndexOf('.')) : 
-					propsPath;
+			String name = new File(propsPath).getName();
+			if (name.contains(".")) {
+				name = name.substring(0, name.lastIndexOf('.'));
+			}
 			SegmenterParams params = new SegmenterParams(goldUtterances, goldLexicon, props,
 					outBase, name);
 			pool.submit(new SegExperiment(params, outLines, idx++));
