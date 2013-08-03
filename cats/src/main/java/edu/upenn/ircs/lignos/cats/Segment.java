@@ -227,9 +227,14 @@ public class Segment {
 	/**
 	 * Evaluate the segmentation against gold
 	 */
-	public Result[] eval(List<Utterance> goldUtterances, List<Utterance> segUtterances,
-			Lexicon goldLexicon, Lexicon segLexicon) {
-		if (goldUtterances.size() != segUtterances.size()) {
+	public Result[] eval(List<Utterance> goldTrainUtterances, List<Utterance> segTrainUtterances,
+			List<Utterance> goldTestUtterances, List<Utterance> segTestUtterances,
+			Lexicon goldTrainLexicon, Lexicon segTrainLexicon) {
+		boolean useTestData = goldTestUtterances != null;
+		List<Utterance> goldEvalUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
+		List<Utterance> segEvalUtterances = useTestData ? segTestUtterances : segTrainUtterances;
+
+		if (goldEvalUtterances.size() != segEvalUtterances.size()) {
 			throw new RuntimeException("Different length gold and test utterances.");
 		}
 
@@ -265,18 +270,25 @@ public class Segment {
 			System.err.println("Couldn't open evaluation log file");
 		}
 
-		Result boundaryResult = Evaluation.evalUtterances(goldUtterances, segUtterances,
-				segLog, perfLog, EvalMethod.BOUNDARIES);
+		// If we're eval-ing on the test data, pass null for the perflog, and then do a second
+		// pass on the training data solely for the purpose of performance logging.
+		Result boundaryResult = Evaluation.evalUtterances(goldEvalUtterances, segEvalUtterances,
+				segLog, useTestData ? null : perfLog, EvalMethod.BOUNDARIES);
+		if (perfLog != null && useTestData) {
+			// Pass null for the segLog since this it should only show the testing evaluation
+			Evaluation.evalUtterances(goldTrainUtterances, segTrainUtterances,
+					null, perfLog, EvalMethod.BOUNDARIES);
+		}
 		System.out.println("Boundaries:");
 		System.out.println(boundaryResult);
 
-		Result wordResult = Evaluation.evalUtterances(goldUtterances, segUtterances,
+		Result wordResult = Evaluation.evalUtterances(goldEvalUtterances, segEvalUtterances,
 				segLog, wordLog, EvalMethod.WORDS);
 		System.out.println("Words:");
 		System.out.println(wordResult);
 
 		System.out.println("Lexicon:");
-		Result lexResult = Evaluation.evalLexicons(goldLexicon, segLexicon, lexLog);
+		Result lexResult = Evaluation.evalLexicons(goldTrainLexicon, segTrainLexicon, lexLog);
 
 		// Close any open logs
 		if (segLog != null) segLog.close();
@@ -494,14 +506,10 @@ public class Segment {
 			seg.segment(segTestUtterances, false);
 		}
 
-		// Choose the right utterances for evaluation
-		List<Utterance> evalSegUtterances = useTestData ? segTestUtterances : segTrainUtterances;
-		List<Utterance> evalGoldUtterances = useTestData ? goldTestUtterances : goldTrainUtterances;
-
 		// Output eval. It always gets the goldTrainLexicon because the lexicon is only learned
 		// during training.
-		Result[] evalResults = seg.eval(evalGoldUtterances, evalSegUtterances, goldTrainLexicon,
-				seg.lexicon);
+		Result[] evalResults = seg.eval(goldTrainUtterances, segTrainUtterances,
+				goldTestUtterances, segTestUtterances, goldTrainLexicon, seg.lexicon);
 		seg.writeOutput(segTrainUtterances, seg.lexicon);
 
 		return evalResults;
