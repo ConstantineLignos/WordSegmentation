@@ -34,12 +34,7 @@ import edu.upenn.ircs.lignos.cats.lexicon.Word;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation;
 import edu.upenn.ircs.lignos.cats.metrics.Evaluation.EvalMethod;
 import edu.upenn.ircs.lignos.cats.metrics.Result;
-import edu.upenn.ircs.lignos.cats.segmenters.BeamSubtractiveSegmenter;
-import edu.upenn.ircs.lignos.cats.segmenters.RandomSegmenter;
-import edu.upenn.ircs.lignos.cats.segmenters.Segmenter;
-import edu.upenn.ircs.lignos.cats.segmenters.TPTroughSegmenter;
-import edu.upenn.ircs.lignos.cats.segmenters.UnitSegmenter;
-import edu.upenn.ircs.lignos.cats.segmenters.UtteranceSegmenter;
+import edu.upenn.ircs.lignos.cats.segmenters.*;
 
 public class Segment {
 	// Parameter names used for reading from property files
@@ -69,6 +64,8 @@ public class Segment {
 	private static final String SEGMENTER_UTTERANCE = "Utterance";
 	private static final String SEGMENTER_RANDOM = "Random";
 	private static final String SEGMENTER_TROUGH = "Trough";
+	private static final String SEGMENTER_GY = "GambellYang";
+	private static final String SEGMENTER_SUBTRACTIVE = "Subtractive";
 
 	// Experimental controls
 	public boolean STRESS_SENSITIVE_LOOKUP;
@@ -172,6 +169,12 @@ public class Segment {
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_UTTERANCE)) {
 			seg = new UtteranceSegmenter(segLexicon);
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_SUBTRACTIVE)) {
+			seg = new SubtractiveSegmenter(segLexicon);
+		}
+		else if (SEGMENTER_NAME.equals(SEGMENTER_GY)) {
+			seg = new GambellYangSegmenter(segLexicon, USE_STRESS);
 		}
 		else if (SEGMENTER_NAME.equals(SEGMENTER_RANDOM)) {
 			seg = new RandomSegmenter(RANDOM_SEG_THRESHOLD, segLexicon);
@@ -416,6 +419,8 @@ public class Segment {
 		// Load props
 		Properties props = Utils.loadProps(propsPath);
 		boolean stress_sensitive_lookup = new Boolean(props.getProperty(STRESS_SENSITIVE_PROP));
+		String segmenterName = props.getProperty(SEGMENTER_PROP);
+		System.out.println("Running segmenter " + segmenterName);
 
 		// Create the gold lexicon
 		Lexicon goldLexicon = Lexicon.lexiconFromUtterances(goldUtterances,

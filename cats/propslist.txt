@@ -3,6 +3,9 @@ props/random.props
 props/random_oracle.props
 props/unit.props
 props/trough.props
+props/subtractive.props
+props/gy_agnostic_nostress.props
+props/gy_agnostic_stress.props
 props/notrust.props
 props/nobeam.props
 props/default.props
