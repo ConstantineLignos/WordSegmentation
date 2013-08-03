@@ -27,6 +27,7 @@ from eng_syll import kg_syllabify
 from esp_syll import esp_syllabify
 from esp_dict import EspLex
 
+PRINT_MISSES = False
 ALT_RE = re.compile(r".+\(\d+\)$")
 
 
@@ -60,12 +61,13 @@ def convert(syll_prons):
                       if word in syll_prons]
 
         # Print misses to stderr
-        for word in line.split():
-            if word not in syll_prons:
-                try:
-                    print >> sys.stderr, word.encode('ascii')
-                except UnicodeDecodeError:
-                    pass
+        if PRINT_MISSES:
+            for word in line.split():
+                if word not in syll_prons:
+                    try:
+                        print >> sys.stderr, word.encode('ascii')
+                    except UnicodeDecodeError:
+                        pass
 
         # Print if all words have non-empty syllabifications and were
         # transcribed. A word can get an empty syllabification if it
