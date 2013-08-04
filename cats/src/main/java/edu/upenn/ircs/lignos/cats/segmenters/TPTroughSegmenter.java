@@ -67,11 +67,6 @@ public class TPTroughSegmenter implements Segmenter {
 	 */
 	@Override
 	public Boolean[] segment(Utterance utterance, boolean training, boolean trace) {
-		// Update probabilities if we're training
-		if (training) {
-			train(utterance);
-		}
-
 		// Get info about the utterance. Since the segmentation is a copy,
 		// don't worry about modifying it
 		Boolean[] segmentation = utterance.getBoundariesCopy();
@@ -90,10 +85,11 @@ public class TPTroughSegmenter implements Segmenter {
 			}
 		}
 
-		// Increment the words used in the utterance.
+		// Increment the words used in the utterance and update probabilities if we're training.
 		if (training) {
 			lexicon.incUtteranceWords(utterance.getUnits(), utterance.getStresses(), segmentation,
 					null);
+			train(utterance);
 		}
 
 		return segmentation;
