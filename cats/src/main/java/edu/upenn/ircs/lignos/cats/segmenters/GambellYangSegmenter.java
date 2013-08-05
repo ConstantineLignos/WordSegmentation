@@ -3,7 +3,6 @@ package edu.upenn.ircs.lignos.cats.segmenters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 
 import edu.upenn.ircs.lignos.cats.Utterance;
 import edu.upenn.ircs.lignos.cats.lexicon.Lexicon;
@@ -35,11 +34,26 @@ public class GambellYangSegmenter implements Segmenter {
 				Word word = SegUtil.chooseBestScoreWord(prefixes, lexicon, null);
 				subtractiveSegs++;
 
-				// Segment the left side of the word if it's not the start of the utterance.
+				// Segment the left side of the word if it's not the start of the utterance. Also
+				// reward the previous word if it's valid.
 				if (baseIndex != 0) {
 					segmentation[baseIndex - 1] = true;
+
+					// When training, we can reward the previous word under two conditions:
+					// 1. The base index has changed since the last segmentation. If it hasn't,
+					//    the previous word was already rewarded when it was segmented.
+					// 3. The previous word has 1 or fewer primary stresses, if we're using stress.
+					int nPrevWordStresses = Collections.frequency(Arrays.asList(
+							(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation)), true);
+					if (training && baseIndex != lastSegBaseIndex &&
+							(!useStress || nPrevWordStresses <= 1)) {
+						lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
+								(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
+					}
 				}
-				// Segment the right side of the word if it's not the end of the utterance.
+
+				// Segment the right side of the word if it's not the end of the utterance. Reward
+				// the resulting word.
 				int finalBound = baseIndex + word.length - 1;
 				if (finalBound != segmentation.length) {
 					segmentation[finalBound] = true;
@@ -50,19 +64,9 @@ public class GambellYangSegmenter implements Segmenter {
 					}
 				}
 				// If we did segment to the end of the utterance, make sure to reward the final
-				// word and the previous word. Note that just hitting the end of the while loop will
-				// not reward the final word; this is as specified by GY.
+				// word. Note that just hitting the end of the while loop will not reward the final
+				// word; this is as specified by GY.
 				else {
-					// Two reasons not to reward the previous word:
-					// 1. If the baseIndex is zero, there's no previous word to reward.
-					// 2. If the base index is unchanged since the last segmentation, the previous
-					//    word was already rewarded when it was segmented.
-					if (baseIndex != 0 && baseIndex != lastSegBaseIndex) {
-						if (training) {
-							lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
-									(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
-						}
-					}
 					if (training) {
 						lexicon.rewardWord((String[]) SegUtil.sliceFromFinalBoundary(units, segmentation),
 								(Boolean[]) SegUtil.sliceFromFinalBoundary(stresses, segmentation));
@@ -77,8 +81,10 @@ public class GambellYangSegmenter implements Segmenter {
 			else if (useStress && baseIndex < stresses.length - 1 && stresses[baseIndex] &&
 					stresses[baseIndex + 1]) {
 				segmentation[baseIndex] = true;
-				// Reward this word
-				if (training) {
+				// Reward this word if it has one or fewer primary stresses
+				int nWordStresses = Collections.frequency(Arrays.asList(
+						(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation)), true);
+				if (training && nWordStresses <= 1) {
 					lexicon.rewardWord((String[]) SegUtil.sliceFromLastBoundary(units, segmentation),
 							(Boolean[]) SegUtil.sliceFromLastBoundary(stresses, segmentation));
 				}
