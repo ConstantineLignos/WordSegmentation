@@ -27,11 +27,13 @@ do
     CAT_CHA=$DATA/${NAME}.cha
     CAT_CLEAN=$DATA/${NAME}.txt
     SYLL=$DATA/${NAME}_syll.txt
+    UNREAL_SYLL=$DATA/${NAME}_syll_unreal.txt
     echo "Concatenating to ${CAT_CHA}"
     cat $DATA/Brown/"${NAME^}"/${NAME}*.cha > $CAT_CHA
     ./clean_childes.py $CAT_CHA $CAT_CLEAN $FILTER clean
     echo "Converting to phonemic form"
     ./convert_corpus_phonemic.py $DATA/cmudict.0.7a_ext_reduced eng < $CAT_CLEAN > $SYLL
+    ./convert_corpus_phonemic.py $DATA/cmudict.0.7a_ext eng < $CAT_CLEAN > $UNREAL_SYLL
     echo "Number of lines:"
     wc -l < $SYLL
     echo "Unique words:"
