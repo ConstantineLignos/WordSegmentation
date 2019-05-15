@@ -1,5 +1,8 @@
 #!/bin/bash -e
 
+# The dependencies required for this script are no longer available as-is.
+# Do not use this script; it just provides a historical example for posterity.
+
 # This script depends on having a number of other scripts that are not here,
 # all of which can be found at https://github.com/ConstantineLignos/LingTools
 # I just symlink these into this directory.

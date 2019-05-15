@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-"""Convert a text corpus to a syllabified phonemic form using CMUdict"""
+"""
+Convert a text corpus to a syllabified phonemic form using CMUdict.
+
+See README.md for usage.
+"""
 
 # Copyright (C) 2011-2013 Constantine Lignos
 #
@@ -20,7 +24,7 @@
 import sys
 import re
 
-from lexinfo.cmudictreader import CMUDict
+from cmudictreader import CMUDict
 
 from syllabification import format_sylls
 from eng_syll import kg_syllabify
@@ -37,7 +41,14 @@ def load_eng_syll_dict(dict_path):
     prons = CMUDict(dict_path)
 
     # The syllabified pronunciation of each word
-    return dict((word, kg_syllabify(pron)) for word, pron in prons.items())
+    output = {}
+    for word, pron in prons.items():
+        try:
+            output[word] = kg_syllabify(pron)
+        except ValueError:
+            print >> sys.stderr, "Could not syllabify word:", word
+
+    return output
 
 
 def load_esp_syll_dict(dict_path):
@@ -94,6 +105,8 @@ def main():
         syll_dict = load_eng_syll_dict(dict_path)
     elif lang == "esp":
         syll_dict = load_esp_syll_dict(dict_path)
+    else:
+        raise ValueError("Unknown language: " + lang)
 
     convert(syll_dict)
 
