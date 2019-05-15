@@ -298,8 +298,8 @@ public class Segment {
 		if (verbose) {
 			System.out.println("Boundaries:");
 			System.out.println(boundaryResult);
-			System.out.println("Words tokens:");
-			System.out.println(wordTokensResults);
+			System.out.println("Word tokens:");
+			System.out.println(wordTokensResults.toStringNoAPrimeBDoublePrime());
 			System.out.println("Word types:");
 			System.out.println(wordTypesResult.toStringPRF());
 			System.out.println("Lexicon:");

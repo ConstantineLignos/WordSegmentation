@@ -68,9 +68,15 @@ public class Result {
 				precision, recall, fScore, hitRate, faRate, aPrime, bDoublePrime);
 	}
 
+	public String toStringNoAPrimeBDoublePrime() {
+		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f\nHit Rate: %.4f, " +
+						"FA Rate: %.4f",
+				precision, recall, fScore, hitRate, faRate);
+	}
+
 	public String toStringPRF() {
 		return String.format("Precision: %.4f, Recall: %.4f, F-Score: %.4f",
-				precision, recall, fScore, hitRate, faRate, aPrime);
+				precision, recall, fScore);
 	}
 
 	public String toCSVString() {
