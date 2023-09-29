@@ -2,12 +2,12 @@
 
 This repository contains code for the experiments in a chapter of my
 2013 dissertation [Modeling Words in the
-Mind](https://lignos.org/thesis) and the papers [Infant Word
+Mind](https://lignos.org/thesis), as well as the papers [Infant Word
 Segmentation: An Incremental, Integrated
 Model](http://www.lingref.com/cpp/wccfl/30/paper2821.pdf) and
 [Modeling Infant Word Segmentation](https://aclanthology.org/W11-0304).
 
-Unfortunately, I never had a chace to publish a journal article that
+Unfortunately, I never had a chance to publish a journal article that
 includes the thesis chapter experiments, which are significantly more
 refined than what is presented in the two papers.
 
@@ -53,9 +53,9 @@ If you use this code, please cite the following:
 
 Repository structure:
 
-/cats	   Code for word segmentation simulations
-/data	   Word segmentation data
-/tools	   Tools for preparing input and analyzing output
+* /cats	   Code for word segmentation simulations
+* /data	   Word segmentation data
+* /tools	   Tools for preparing input and analyzing output
 
 # Running Segmentation Experiments Using CATS
 
