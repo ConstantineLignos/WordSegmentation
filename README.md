@@ -55,7 +55,10 @@ Repository structure:
 
 * /cats	   Code for word segmentation simulations
 * /data	   Word segmentation data
-* /tools	   Tools for preparing input and analyzing output
+* /tools   Tools for preparing input and analyzing output
+
+All Python code should be run using Python 2.7. All Java code was
+written for Java 6 but will run on newer versions.
 
 # Running Segmentation Experiments Using CATS
 

@@ -2,12 +2,12 @@
 
 1. *Set up your data.* The format for the data is one utterance per
    line, with words separated by spaces. Each word is separated into
-   syllables, delimited by `|`, and phonements, delimited by the `.`
+   syllables, delimited by `|`, and phonemes, delimited by the `.`
    character. If `1` appears in the syllable, the syllable treated as
    stressed. For example, the utterance "Play checkers" might be
    written as follows if transcribed using ARPABET:
    `P.L.EY1 CH.EH1|K.ER0.Z`
-2. *Compile the code.* First, install maven (`mvn`) on your
+2. *Compile the code.* First, install Java and maven (`mvn`) on your
    system. From the `cats` directory, run: `mvn package`.
 3. *Run the segmenter.* Use the `segment.sh` script to run the
    compiled code. For example, to use the sample data for training and
@@ -60,7 +60,7 @@ Run took 2.585 seconds.
 
 # FAQ
 
-* _Can I run on a single file or do I need separate train and test?_
+* Can I run on a single file or do I need separate train and test?
   You can test on the training file (which is standard for many
   unsupervised word segmentation studies) by specifying `none` for the
   test file. For example:
